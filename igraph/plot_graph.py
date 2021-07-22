@@ -7,6 +7,9 @@ import warnings
 import argparse
 import traceback as tb
 
+arrow_size = 1
+arrow_width = 1
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--input_path", required=True, type=str, help="Path to input file.")
 parser.add_argument("--output_path", required=True, type=str, help="Path to output file.")
@@ -71,7 +74,6 @@ parser.add_argument("--self_loops", action='store_true', dest="self_loops", requ
                     help="Remove self loops if this flag is not set.")
 
 
-
 def cluster(G, algo_str):
     """
     This is a helper function to compute clusters using user-selected algorithms.
@@ -129,8 +131,9 @@ def load_graph(input_path: str, directed: bool, multi_edges: bool, self_loops: b
                 G = G.simplify(multiple=not multi_edges, loops=not self_loops)
                 warnings.warn(UserWarning("WARNING: The input graph had either self-loops or multi-edges. "
                                           "You set allow multi-edges to : " + str(multi_edges) + ". You set allow "
-                                          "self-loops to: " + str(self_loops) + ". Those you set to false caused "
-                                          "multi-edges and/or self-loops to be removed."))
+                                                                                                 "self-loops to: " + str(
+                    self_loops) + ". Those you set to false caused "
+                                  "multi-edges and/or self-loops to be removed."))
     except Exception as e:
         tb.print_exc()
         print(e)
@@ -162,7 +165,7 @@ def compute_best_clustering(G: igraph.Graph, clusterings: list):
             if best_score < float(curr_score):
                 best_cluster = curr_cluster
                 best_score = curr_score
-    return  best_cluster
+    return best_cluster
 
 
 output_formats = ["pdf", "png", "svg", "ps", "eps"]
@@ -219,8 +222,6 @@ def main():
     total_pixels = output_width * output_height
     # Scale the vertex and arrow size based on the number of output pixels
     vertex_size = min(total_pixels / ((G.vcount() * 6) + 1), 15)
-    arrow_size = 1
-    arrow_width = 1
     visual_style["edge_arrow_size"] = arrow_size
     visual_style["edge_arrow_width"] = arrow_width
 
