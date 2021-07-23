@@ -236,9 +236,6 @@ def scale_nodes(scale: str, G: igraph.Graph, old_G: igraph.Graph, best_cluster, 
     G.vs["size"] = sizes
 
 
-
-
-
 def main():
     args = parser.parse_args()
     # Path Arguments
@@ -313,7 +310,7 @@ def main():
 
         if scale != "degree":
             old_G = G.copy()
-
+        # Set G to the cluster that was identified earlier.
         G = best_cluster.cluster_graph()
 
         print("Finished contracting graph.")
@@ -338,6 +335,9 @@ def main():
 
     # Scale based on node degree if requested.
     if scale:
+        print("Scaling the nodes in plot.")
+        print("====================")
+
         scale_nodes(scale=scale, G=G, old_G=old_G, best_cluster=best_cluster, vertex_size=vertex_size)
 
         print("Finished scaling the nodes in plot.")
