@@ -7,8 +7,13 @@ import warnings
 import argparse
 import traceback as tb
 
-arrow_size = 1
-arrow_width = 1
+# Constants
+ARROW_SIZE = 1
+ARROW_WIDTH = 1
+
+OUTPUT_FORMATS = ["pdf", "png", "svg", "ps", "eps"]
+INPUT_FORMATS = ["lgl", "adjacency", "dimacs", "dl", "edgelist", "edges", "edge", "graphviz", "dot", "gml", "graphml",
+                 "graphmlz", "leda", "ncol", "pajek", "net", "pickle"]
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--input_path", required=True, type=str, help="Path to input file.")
@@ -168,9 +173,70 @@ def compute_best_clustering(G: igraph.Graph, clusterings: list):
     return best_cluster
 
 
-output_formats = ["pdf", "png", "svg", "ps", "eps"]
-input_formats = ["lgl", "adjacency", "dimacs", "dl", "edgelist", "edges", "edge", "graphviz", "dot", "gml", "graphml",
-                 "graphmlz", "leda", "ncol", "pajek", "net", "pickle"]
+def set_arrow_sizes(visual_style):
+    """
+    This sets the sizes of arrows using the constants defined above.
+    :param visual_style: The visual sytle dictionary being used in the plot method.
+    :return: None
+    """
+    # Compute the total number of pixels in the output plot
+
+    visual_style["edge_arrow_size"] = ARROW_SIZE
+    visual_style["edge_arrow_width"] = ARROW_WIDTH
+
+
+def get_vertex_size(G, output_width: int, output_height: int):
+    """
+    This computes the vertex size based on the output size and graph properties.
+    :param G: The graph to plot.
+    :param output_width: The output width in pixels
+    :param output_height: The output height in pixels
+    :return: The vertex size in pixels
+    """
+
+    # Compute the total number of pixels in the output plot
+    total_pixels = output_width * output_height
+    # Scale the vertex and arrow size based on the number of output pixels
+    vertex_size = min(total_pixels / ((G.vcount() * 6) + 1), 15)
+    return vertex_size
+
+
+def scale_nodes(scale: str, G: igraph.Graph, old_G: igraph.Graph, best_cluster, vertex_size: float):
+    """
+    This performs the node scaling if required.
+    :param G: The current graph.
+    :param scale: The scaling argument. Indicates which type of scaling to perform.
+    :param old_G: The graph before contraction.
+    :param best_cluster: The best clustering that was found.
+    :param vertex_size: The base vertex size in pixels
+    :return: None
+    """
+    if scale != "degree":
+
+        if scale == "comm_degree":
+            if old_G is None:
+                raise ValueError("The old_G is None and scaling is being performed by community degree.")
+
+            # Compute inter-community degree
+            sizes = np.fromiter(
+                (sum([sum(1 for neighbor in old_G.vs[node].neighbors() if neighbor not in best_cluster[comm.index])
+                      for node in best_cluster[comm.index]]) for comm in
+                 G.vs),
+                dtype=float)
+        elif scale == "comm_size":
+            sizes = best_cluster.sizes()
+            # Scale the nodes by the size of their communities
+        else:
+            raise Exception(scale + " is not a valid scaling style.")
+    else:
+        deg = G.degree()
+        sizes = deg
+
+    sizes = (((sizes - np.mean(sizes)) / ((2 * np.std(sizes)) + 1)) * vertex_size) + vertex_size
+    G.vs["size"] = sizes
+
+
+
 
 
 def main():
@@ -180,32 +246,40 @@ def main():
     # Graph Metadata
     directed = args.directed
     # Check if the format is valid.
-    if input_path.split(".")[-1].lower() not in input_formats:
+    if input_path.split(".")[-1].lower() not in INPUT_FORMATS:
         print("The input file extension is " + input_path.split(".")[-1].lower() + " is not a supported input format.")
-        raise TypeError("The input file extension should be one of: " + str(input_formats))
+        raise TypeError("The input file extension should be one of: " + str(INPUT_FORMATS))
 
     # Check if the format is valid.
     output_path = args.output_path
-    if output_path.split(".")[-1].lower() not in output_formats:
+    if output_path.split(".")[-1].lower() not in OUTPUT_FORMATS:
         print(
             "The input file extension is " + output_path.split(".")[-1].lower() + " is not a supported output format.")
-        raise TypeError("The output file extension should be one of: " + str(output_formats))
+        raise TypeError("The output file extension should be one of: " + str(OUTPUT_FORMATS))
 
     # Modifications to the plot
     contract = args.contract
     color = args.color
     scale = args.scale
+    # If we are not contracting into communities and these options are set, this is a problem.
+    if (scale == "comm_degree" or scale == "comm_size") and not contract:
+        raise ValueError("If scaling by community traits is requested (i.e. comm_degree or comm_size), then,"
+                         "contract must also be true.")
+
     drop_isolates = args.drop_isolates
     self_loops = args.self_loops
     multi_edges = args.multi_edges
 
     print(f"Contract: {contract} Drop Isolates: {drop_isolates}")
-    # Set the output size
+    # Get the output size
     output_width, output_height = int(args.output_width), int(args.output_height)
     # Layout algorithm
     layout_algorithm = args.layout_algorithm
     # The clustering algorithm to try.
     clusterings = args.cluster
+
+    # Initialize the visual style object that will be used to set the plot parameters.
+    visual_style = {}
 
     colors = ["red", "blue", "black", "brown", "green", "orange", "yellow", "magenta", "lime", "indigo", "cyan"]
 
@@ -216,19 +290,17 @@ def main():
     print("Graph finished loading.")
     print("======================")
 
-    visual_style = {}
+    # This finds the vertex size.
+    vertex_size = get_vertex_size(G=G, output_width=output_width, output_height=output_height)
 
-    # Compute the total number of pixels in the output plot
-    total_pixels = output_width * output_height
-    # Scale the vertex and arrow size based on the number of output pixels
-    vertex_size = min(total_pixels / ((G.vcount() * 6) + 1), 15)
-    visual_style["edge_arrow_size"] = arrow_size
-    visual_style["edge_arrow_width"] = arrow_width
+    # Set the arrow sizes
+    set_arrow_sizes(visual_style=visual_style)
 
     # Drop isolates if requested.
     if drop_isolates:
         G.delete_vertices(G.vs.select(_degree=0))
 
+    # Find the best clustering based on modularity score.
     best_cluster = None
     if color == "comm_coloring" or contract:
         print("Starting clustering computation.")
@@ -236,6 +308,7 @@ def main():
         print("Finishing clustering algorithm run.")
         print("====================")
 
+    old_G = None
     if contract:
 
         if scale != "degree":
@@ -246,6 +319,7 @@ def main():
         print("Finished contracting graph.")
         print("====================")
 
+        # If the coloring is by community, pick a random color for each community which is now a node.
         if color == "comm_coloring":
             G.vs['color'] = np.random.choice(colors, size=(G.vcount(),), replace=True)
 
@@ -255,7 +329,8 @@ def main():
     elif color in colors:
         G.vs["color"] = color
 
-    deg = G.degree()
+    print("Running Layout Algorithm: " + str(layout_algorithm))
+    print("====================")
     layout = G.layout(layout_algorithm)
 
     print("Finished running layout algorithm.")
@@ -263,28 +338,8 @@ def main():
 
     # Scale based on node degree if requested.
     if scale:
-        if scale != "degree":
-            # If we are not contracting into communities and these options are set, this is a problem.
-            if (scale == "comm_degree" or scale == "comm_size") and not contract:
-                raise ValueError("If scaling by community traits is requested (i.e. comm_degree or comm_size), then,"
-                                 "contract must also be true.")
-            if scale == "comm_degree":
-                # Compute inter-community degree
-                sizes = np.fromiter(
-                    (sum([sum(1 for neighbor in old_G.vs[node].neighbors() if neighbor not in best_cluster[comm.index])
-                          for node in best_cluster[comm.index]]) for comm in
-                     G.vs),
-                    dtype=float)
-                sizes = ((sizes - np.mean(sizes)) / (1 + (np.std(sizes) * 2)) * vertex_size) + vertex_size
-                G.vs["size"] = sizes
-            elif scale == "comm_size":
-                sizes = best_cluster.sizes()
-                # Scale the nodes by the size of their communities
-                G.vs["size"] = (((sizes - np.mean(sizes)) / ((2 * np.std(sizes)) + 1)) * vertex_size) + vertex_size
-            else:
-                raise Exception(scale + " is not a valid scaling style.")
-        else:
-            G.vs["size"] = (((deg - np.mean(deg)) / ((2 * np.std(deg)) + 1)) * vertex_size) + vertex_size
+        scale_nodes(scale=scale, G=G, old_G=old_G, best_cluster=best_cluster, vertex_size=vertex_size)
+
         print("Finished scaling the nodes in plot.")
         print("====================")
     else:
