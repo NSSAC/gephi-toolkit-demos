@@ -10,6 +10,17 @@ ARROW_WIDTH = 1
 MAX_NODE_COUNT = 100
 
 
+def load_induced_subgraph_nodes(subgraph_nodes_path: str):
+    """
+    This loads nodes for an induced subgraph.
+    :param subgraph_nodes_path: The input path to the subgraph nodes.
+    :return: The nodes to include in the induced subgraphs.
+    """
+    with open(subgraph_nodes_path, "r") as nodes_fp:
+        nodes = nodes_fp.readlines()
+    return list(map(lambda x: int(float(x)), nodes))
+
+
 def get_induced_subgraph(G: igraph.Graph, node_list: list):
     """
     The list of nodes to get for the induced subgraph.

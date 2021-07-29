@@ -6,7 +6,7 @@ import igraph
 import argparse
 
 from plotting_methods import load_graph, get_vertex_size, set_arrow_sizes, compute_best_clustering, scale_nodes, \
-    label_nodes, label_edges, get_ego_net, get_induced_subgraph
+    label_nodes, label_edges, get_ego_net, get_induced_subgraph, load_induced_subgraph_nodes
 
 # Constants
 OUTPUT_FORMATS = ["pdf", "png", "svg", "ps", "eps"]
@@ -90,6 +90,10 @@ parser.add_argument("--ego_node_center", type=int, required=False, default=None,
                          "of an ego network subplot.")
 parser.add_argument("--ego_node_distance", type=int, default=1, required=False, help="The maximum distance from the "
                                                                                      "root of the ego network.")
+# A file containing nodes in an induced subgraph.
+parser.add_argument("--subgraph_nodes", type=str, default=None, required=False, help="This should a string that "
+                                                                                     "contains the path to node IDs to "
+                                                                                     "include in an induced subgraph.")
 
 
 def main():
@@ -112,6 +116,8 @@ def main():
     # The ego network parameters
     ego_node_center = args.ego_node_center
     ego_node_distance = args.ego_node_distance
+    # Get the induced subgraph path
+    subgraph_nodes = args.subgraph_nodes
 
     # Modifications to the plot
     contract = args.contract
@@ -163,10 +169,19 @@ def main():
     print("Graph finished loading.")
     print("======================")
 
+    if subgraph_nodes is not None and ego_node_center is not None:
+        raise ValueError("Both subgraph_nodes and ego_node_center parameters cannot be used together.")
+
+    induced_graph_nodes = None
     # Get the ego network
     if ego_node_center is not None:
-        ego_nodes = get_ego_net(G=G, ego_node_center=ego_node_center, ego_node_distance=ego_node_distance)
-        G = get_induced_subgraph(G=G, node_list=ego_nodes)
+        induced_graph_nodes = get_ego_net(G=G, ego_node_center=ego_node_center, ego_node_distance=ego_node_distance)
+    # Get the induced graph nodes
+    if subgraph_nodes is not None:
+        induced_graph_nodes = load_induced_subgraph_nodes(subgraph_nodes_path=subgraph_nodes)
+
+    if subgraph_nodes is not None or ego_node_center is not None:
+        G = get_induced_subgraph(G=G, node_list=induced_graph_nodes)
 
     # This finds the vertex size.
     vertex_size = get_vertex_size(G=G, output_width=output_width, output_height=output_height)
