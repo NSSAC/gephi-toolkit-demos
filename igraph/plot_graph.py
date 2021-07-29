@@ -14,7 +14,7 @@ INPUT_FORMATS = ["lgl", "adjacency", "dimacs", "dl", "edgelist", "edges", "edge"
                  "graphmlz", "leda", "ncol", "pajek", "net", "pickle"]
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--input_edges", required=True, type=str, help="Path to input file.")
+parser.add_argument("--input_path", required=True, type=str, help="Path to input file.")
 parser.add_argument("--output_path", required=True, type=str, help="Path to output file.")
 
 # All of the below are optional CLAs
@@ -78,18 +78,20 @@ parser.add_argument("--self_loops", action='store_true', dest="self_loops", requ
 # This flag manages whether or not node labels are shown.
 parser.add_argument("--node_labels", action="store_true", dest="node_labels", required=False, default=False,
                     help="If this flag is set, the node labels in the input edge file are plotted on the graph.")
-
+parser.add_argument("--node_labels_names", required=False,
+                    type=str, nargs="*", default=[],
+                    help="This provides the names of the values to be used in node labels.")
 
 
 def main():
     args = parser.parse_args()
     # Path Arguments
-    input_edges = args.input_edges
+    input_path = args.input_path
     # Graph Metadata
     directed = args.directed
     # Check if the format is valid.
-    if input_edges.split(".")[-1].lower() not in INPUT_FORMATS:
-        print("The input file extension is " + input_edges.split(".")[-1].lower() + " is not a supported input format.")
+    if input_path.split(".")[-1].lower() not in INPUT_FORMATS:
+        print("The input file extension is " + input_path.split(".")[-1].lower() + " is not a supported input format.")
         raise TypeError("The input file extension should be one of: " + str(INPUT_FORMATS))
 
     # Check if the format is valid.
@@ -121,16 +123,13 @@ def main():
     clusterings = args.cluster
     # Should the input file be interpreted with node labels for the output plot
     node_labels = args.node_labels
+    node_labels_names = args.node_labels_names
     # Ensure that plotting node labels is actually possible.
-    if node_labels:
+    if node_labels or node_labels_names:
         if contract:
             raise ValueError(
                 "The --node_labels and --contract flags cannot both be set. This would result in invalid node"
                 "labels.")
-        edge_list_like = ["ncol", "edge", "edges", "edgelist"]
-        if input_edges.split(".")[-1].lower() not in edge_list_like:
-            raise ValueError("The --node_labels argument only works for the following formats: " +
-                             str(edge_list_like))
 
     # Initialize the visual style object that will be used to set the plot parameters.
     visual_style = {}
@@ -139,8 +138,9 @@ def main():
 
     print("Beginning Graph Loading.")
     # Attempt to load the graph
-    G = load_graph(input_edges=input_edges, directed=directed, multi_edges=multi_edges, self_loops=self_loops,
+    G = load_graph(input_path=input_path, directed=directed, multi_edges=multi_edges, self_loops=self_loops,
                    node_labels=node_labels)
+    print(list(G.vs))
 
     print("Graph finished loading.")
     print("======================")
@@ -156,7 +156,7 @@ def main():
         G.delete_vertices(G.vs.select(_degree=0))
 
     # Adding node labels
-    label_nodes(G=G, node_labels=node_labels)
+    label_nodes(G=G, node_labels=node_labels, node_labels_names=node_labels_names)
 
     # Find the best clustering based on modularity score.
     best_cluster = None

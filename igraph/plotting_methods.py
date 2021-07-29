@@ -10,19 +10,32 @@ ARROW_WIDTH = 1
 MAX_NODE_COUNT = 100
 
 
-def label_nodes(G: igraph.Graph, node_labels: bool):
+def label_nodes(G: igraph.Graph, node_labels: bool, node_labels_names: list):
     """
     This is used perform any node labelling required.
     :param G: The graph to be plotted.
     :param node_labels: A boolean deciding whether or not to plot node labels.
+    :param node_labels_names: A list of node attributes to use in node labels.
     :return:
     """
     # Set the plot attribute for node labels to the name attribute.
-    if node_labels:
+    if node_labels or node_labels_names:
+        if not node_labels_names and G.vs["label"] == []:
+            node_labels_names += ["name"]
         # Raise error if attempting to label when there are too many nodes
         if len(G.vs) > MAX_NODE_COUNT:
             raise ValueError("There are too many nodes in the graph to plot the labels.")
-        G.vs["label"] = G.vs["name"]
+        # Plot the labels given by the user.
+        if node_labels_names:
+            labels = ["{" for i in range(len(G.vs))]
+            for i in range(0, len(node_labels_names) - 1):
+                label = node_labels_names[i]
+                labels = [labels[j] + str(label) + " : " + G.vs[label][j] + ", " for j in range(len(labels))]
+            last_label = node_labels_names[-1]
+            labels = [labels[j] + str(last_label) + " : " + G.vs[last_label][j] + "}" for j in range(len(labels))]
+            G.vs["label"] = labels
+    else:
+        G.vs["label"] = []
 
 
 def cluster(G: igraph.Graph, algo_str):
@@ -76,8 +89,8 @@ def load_graph(input_path: str, directed: bool, multi_edges: bool, self_loops: b
     """
     G = igraph.Graph()
     try:
-        if node_labels:
-            G = igraph.Graph.Read_Ncol(input_path, directed=directed)
+        if input_path.split(".")[-1] in ["graphml", "graphmlz", "pickle", "gml", "dimacs"]:
+            G = igraph.Graph.Load(input_path)
         else:
             G = igraph.Graph.Load(input_path, directed=directed)
 
