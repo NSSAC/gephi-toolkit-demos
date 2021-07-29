@@ -10,6 +10,27 @@ ARROW_WIDTH = 1
 MAX_NODE_COUNT = 100
 
 
+def get_induced_subgraph(G: igraph.Graph, node_list: list):
+    """
+    The list of nodes to get for the induced subgraph.
+    :param G: The input graph.
+    :param node_list: The node list for the induced subgraph.
+    :return: The induced subgraph.
+    """
+    return G.induced_subgraph(vertices=node_list)
+
+
+def get_ego_net(G: igraph.Graph, ego_node_center: int, ego_node_distance: int):
+    """
+    Get the ego node network given the input ego node center and ego node distance.
+    :param G: The input graph G.
+    :param ego_node_center: The center of the ego network.
+    :param ego_node_distance: The distance from the center of the ego network.
+    :return: A list of nodes in the ego network.
+    """
+    return G.neighborhood(vertices=ego_node_center, order=ego_node_distance)
+
+
 def label_nodes(G: igraph.Graph, node_labels: bool, node_labels_names: list):
     """
     This is used perform any node labelling required.
@@ -35,7 +56,19 @@ def label_nodes(G: igraph.Graph, node_labels: bool, node_labels_names: list):
             labels = [labels[j] + str(last_label) + " : " + G.vs[last_label][j] + "}" for j in range(len(labels))]
             G.vs["label"] = labels
     else:
-        G.vs["label"] = []
+        G.vs["label"] = ["" for i in range(len(G.vs))]
+
+
+def label_edges(G: igraph.Graph, edge_width: str):
+    """
+    This is used perform any node labelling required.
+    :param G: The graph to be plotted.
+    :param edge_width: The attribute to be used for edge width.
+    :return:
+    """
+    # Set the plot attribute for node labels to the name attribute.
+    if edge_width is not None:
+        G.vs["edge_width"] = G.vs[edge_width]
 
 
 def cluster(G: igraph.Graph, algo_str):

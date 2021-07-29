@@ -6,7 +6,7 @@ import igraph
 import argparse
 
 from plotting_methods import load_graph, get_vertex_size, set_arrow_sizes, compute_best_clustering, scale_nodes, \
-    label_nodes
+    label_nodes, label_edges, get_ego_net, get_induced_subgraph
 
 # Constants
 OUTPUT_FORMATS = ["pdf", "png", "svg", "ps", "eps"]
@@ -81,6 +81,15 @@ parser.add_argument("--node_labels", action="store_true", dest="node_labels", re
 parser.add_argument("--node_labels_names", required=False,
                     type=str, nargs="*", default=[],
                     help="This provides the names of the values to be used in node labels.")
+# This flag manages whether or not edge labels are shown.
+parser.add_argument("--edge_width", type=str, dest="edge_width", required=False, default=None,
+                    help="The edge width controlling attribute.")
+# Ego net parameters
+parser.add_argument("--ego_node_center", type=int, required=False, default=None,
+                    help="An integer with the node ID used for the root "
+                         "of an ego network subplot.")
+parser.add_argument("--ego_node_distance", type=int, default=1, required=False, help="The maximum distance from the "
+                                                                                     "root of the ego network.")
 
 
 def main():
@@ -100,6 +109,9 @@ def main():
         print(
             "The input file extension is " + output_path.split(".")[-1].lower() + " is not a supported output format.")
         raise TypeError("The output file extension should be one of: " + str(OUTPUT_FORMATS))
+    # The ego network parameters
+    ego_node_center = args.ego_node_center
+    ego_node_distance = args.ego_node_distance
 
     # Modifications to the plot
     contract = args.contract
@@ -109,7 +121,7 @@ def main():
     if (scale == "comm_degree" or scale == "comm_size") and not contract:
         raise ValueError("If scaling by community traits is requested (i.e. comm_degree or comm_size), then,"
                          "contract must also be true.")
-
+    # Boolean switches to decide what is allowed in the graph.
     drop_isolates = args.drop_isolates
     self_loops = args.self_loops
     multi_edges = args.multi_edges
@@ -122,13 +134,21 @@ def main():
     # The clustering algorithm to try.
     clusterings = args.cluster
     # Should the input file be interpreted with node labels for the output plot
+    edge_width = args.edge_width
+    # Should the input file be interpreted with edge labels for the output plot
     node_labels = args.node_labels
     node_labels_names = args.node_labels_names
     # Ensure that plotting node labels is actually possible.
     if node_labels or node_labels_names:
         if contract:
             raise ValueError(
-                "The --node_labels and --contract flags cannot both be set. This would result in invalid node"
+                "The --node_labels and --contract flags cannot both be set. This would result in invalid node "
+                "labels.")
+    # Ensure that plotting edge labels is actually possible.
+    if edge_width is not None:
+        if contract:
+            raise ValueError(
+                "The --edge_labels and --contract flags cannot both be set. This would result in invalid edge "
                 "labels.")
 
     # Initialize the visual style object that will be used to set the plot parameters.
@@ -140,10 +160,13 @@ def main():
     # Attempt to load the graph
     G = load_graph(input_path=input_path, directed=directed, multi_edges=multi_edges, self_loops=self_loops,
                    node_labels=node_labels)
-    print(list(G.vs))
-
     print("Graph finished loading.")
     print("======================")
+
+    # Get the ego network
+    if ego_node_center is not None:
+        ego_nodes = get_ego_net(G=G, ego_node_center=ego_node_center, ego_node_distance=ego_node_distance)
+        G = get_induced_subgraph(G=G, node_list=ego_nodes)
 
     # This finds the vertex size.
     vertex_size = get_vertex_size(G=G, output_width=output_width, output_height=output_height)
@@ -157,6 +180,8 @@ def main():
 
     # Adding node labels
     label_nodes(G=G, node_labels=node_labels, node_labels_names=node_labels_names)
+    # Adding edge labels
+    label_edges(G=G, edge_width=edge_width)
 
     # Find the best clustering based on modularity score.
     best_cluster = None
