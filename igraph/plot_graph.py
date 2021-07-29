@@ -3,14 +3,18 @@ __contact__ = "hlc5v@virginia.edu"
 
 import numpy as np
 import igraph
-import warnings
 import argparse
-import traceback as tb
 
-MAX_NODE_COUNT = 1000
+from plotting_methods import load_graph, get_vertex_size, set_arrow_sizes, compute_best_clustering, scale_nodes, \
+    label_nodes
+
+# Constants
+OUTPUT_FORMATS = ["pdf", "png", "svg", "ps", "eps"]
+INPUT_FORMATS = ["lgl", "adjacency", "dimacs", "dl", "edgelist", "edges", "edge", "graphviz", "dot", "gml", "graphml",
+                 "graphmlz", "leda", "ncol", "pajek", "net", "pickle"]
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--input_path", required=True, type=str, help="Path to input file.")
+parser.add_argument("--input_edges", required=True, type=str, help="Path to input file.")
 parser.add_argument("--output_path", required=True, type=str, help="Path to output file.")
 
 # All of the below are optional CLAs
@@ -62,7 +66,7 @@ parser.add_argument("--output_height", required=False, default=1000,
 parser.add_argument("--scale", required=False, type=str, help="This string argument that takes three possible values"
                                                               ": degree, comm_degree, and comm_size. These determine"
                                                               " how nodes are scaled if at all.")
-# This flag manaages isolates.
+# This flag manages isolates.
 parser.add_argument("--drop_isolates", action='store_true', dest="drop_isolates", required=False, default=False,
                     help="If this flag is provided, the script will drop"
                          "isolates from the graph plot.")
@@ -76,138 +80,40 @@ parser.add_argument("--node_labels", action="store_true", dest="node_labels", re
                     help="If this flag is set, the node labels in the input edge file are plotted on the graph.")
 
 
-def cluster(G, algo_str):
-    """
-    This is a helper function to compute clusters using user-selected algorithms.
-    :param G: The input graph.
-    :param algo_str: A string saying what clustering algorithm to use.
-    :return: A clustering object.
-    """
-
-    if algo_str == "components":
-        return G.components()
-    elif algo_str == "cohesive_blocks":
-        return G.cohesive_blocks()
-    elif algo_str == "community_edge_betweenness":
-        return G.community_edge_betweenness()
-    elif algo_str == "community_fastgreedy":
-        return G.community_fastgreedy()
-    elif algo_str == "community_infomap":
-        return G.community_infomap()
-    elif algo_str == "community_label_propagation":
-        return G.community_label_propagation()
-    elif algo_str == "community_leading_eigenvector":
-        return G.community_leading_eigenvector()
-    elif algo_str == "community_leading_eigenvector_naive":
-        return G.community_leading_eigenvector_naive()
-    elif algo_str == "community_leiden":
-        return G.community_leiden()
-    elif algo_str == "community_multilevel":
-        return G.community_multilevel()
-    elif algo_str == "community_optimal_modularity":
-        return G.community_optimal_modularity()
-    elif algo_str == "community_spinglass":
-        return G.community_spinglass()
-    elif algo_str == "community_walktrap":
-        return G.community_walktrap()
-    else:
-        print(algo_str)
-        raise ValueError("Invalid clustering algorithm name.")
-
-
-def load_graph(input_path: str, directed: bool, multi_edges: bool, self_loops: bool, node_labels: bool):
-    """
-    A helper function used to perform the graph loading part of the plot.
-    :param input_path: A string path to the input graph files.
-    :param directed: A boolean that decides whether the graph is interpreted as directed.
-    :param multi_edges: A boolean that decides whether the graph allows multi-edges.
-    :param self_loops: A boolean that decides whether the graph allows self-loops.
-    :param node_labels: A boolean that when set treat the input file as ncol file.
-    :return: The loaded igraph Graph object.
-    """
-    G = igraph.Graph()
-    try:
-        if node_labels:
-            G = igraph.Graph.Read_Ncol(input_path, directed=directed)
-        else:
-            G = igraph.Graph.Load(input_path, directed=directed)
-
-        # If a graph is not a simple, the graph should have multi-edges and self-loops removed if they are not allowed.
-        if not multi_edges or not self_loops:
-            if not G.is_simple():
-                G = G.simplify(multiple=not multi_edges, loops=not self_loops)
-                warnings.warn(UserWarning("WARNING: The input graph had either self-loops or multi-edges. "
-                                          "You set allow multi-edges to : " + str(multi_edges) + ". You set allow "
-                                                                                                 "self-loops to: " + str(
-                    self_loops) + ". Those you set to false caused "
-                                  "multi-edges and/or self-loops to be removed."))
-    except Exception as e:
-        tb.print_exc()
-        print(e)
-        print("Failed to load the graph from: " + input_path)
-        exit(1)
-    finally:
-        return G
-
-
-def compute_best_clustering(G: igraph.Graph, clusterings: list):
-    """
-    Computes the best clustering using modularity score for input graph.
-    :param G: The input graph.
-    :param clusterings: The list of igraph clustering algorithms to try:
-    :return: The highest modularity score clustering found.
-    """
-    G.to_undirected()
-    warnings.warn(UserWarning("Clustering will convert the graph to undirected."))
-    # Find the best clustering from all of those provided.
-    best_cluster = None
-    best_score = 0
-    for clustering in clusterings:
-        if best_cluster is None:
-            best_cluster = cluster(G, clustering)
-            best_score = float(best_cluster.modularity)
-        else:
-            curr_cluster = cluster(G, clustering)
-            curr_score = float(curr_cluster.modularity)
-            if best_score < float(curr_score):
-                best_cluster = curr_cluster
-                best_score = curr_score
-    return best_cluster
-
-
-output_formats = ["pdf", "png", "svg", "ps", "eps"]
-input_formats = ["lgl", "adjacency", "dimacs", "dl", "edgelist", "edges", "edge", "graphviz", "dot", "gml", "graphml",
-                 "graphmlz", "leda", "ncol", "pajek", "net", "pickle"]
-
 
 def main():
     args = parser.parse_args()
     # Path Arguments
-    input_path = args.input_path
+    input_edges = args.input_edges
     # Graph Metadata
     directed = args.directed
     # Check if the format is valid.
-    if input_path.split(".")[-1].lower() not in input_formats:
-        print("The input file extension is " + input_path.split(".")[-1].lower() + " is not a supported input format.")
-        raise TypeError("The input file extension should be one of: " + str(input_formats))
+    if input_edges.split(".")[-1].lower() not in INPUT_FORMATS:
+        print("The input file extension is " + input_edges.split(".")[-1].lower() + " is not a supported input format.")
+        raise TypeError("The input file extension should be one of: " + str(INPUT_FORMATS))
 
     # Check if the format is valid.
     output_path = args.output_path
-    if output_path.split(".")[-1].lower() not in output_formats:
+    if output_path.split(".")[-1].lower() not in OUTPUT_FORMATS:
         print(
             "The input file extension is " + output_path.split(".")[-1].lower() + " is not a supported output format.")
-        raise TypeError("The output file extension should be one of: " + str(output_formats))
+        raise TypeError("The output file extension should be one of: " + str(OUTPUT_FORMATS))
 
     # Modifications to the plot
     contract = args.contract
     color = args.color
     scale = args.scale
+    # If we are not contracting into communities and these options are set, this is a problem.
+    if (scale == "comm_degree" or scale == "comm_size") and not contract:
+        raise ValueError("If scaling by community traits is requested (i.e. comm_degree or comm_size), then,"
+                         "contract must also be true.")
+
     drop_isolates = args.drop_isolates
     self_loops = args.self_loops
     multi_edges = args.multi_edges
 
     print(f"Contract: {contract} Drop Isolates: {drop_isolates}")
-    # Set the output size
+    # Get the output size
     output_width, output_height = int(args.output_width), int(args.output_height)
     # Layout algorithm
     layout_algorithm = args.layout_algorithm
@@ -215,41 +121,44 @@ def main():
     clusterings = args.cluster
     # Should the input file be interpreted with node labels for the output plot
     node_labels = args.node_labels
+    # Ensure that plotting node labels is actually possible.
     if node_labels:
         if contract:
             raise ValueError(
                 "The --node_labels and --contract flags cannot both be set. This would result in invalid node"
                 "labels.")
         edge_list_like = ["ncol", "edge", "edges", "edgelist"]
-        if input_path.split(".")[-1].lower() not in edge_list_like:
+        if input_edges.split(".")[-1].lower() not in edge_list_like:
             raise ValueError("The --node_labels argument only works for the following formats: " +
                              str(edge_list_like))
+
+    # Initialize the visual style object that will be used to set the plot parameters.
+    visual_style = {}
 
     colors = ["red", "blue", "black", "brown", "green", "orange", "yellow", "magenta", "lime", "indigo", "cyan"]
 
     print("Beginning Graph Loading.")
     # Attempt to load the graph
-    G = load_graph(input_path=input_path, directed=directed, multi_edges=multi_edges, self_loops=self_loops,
+    G = load_graph(input_edges=input_edges, directed=directed, multi_edges=multi_edges, self_loops=self_loops,
                    node_labels=node_labels)
 
     print("Graph finished loading.")
     print("======================")
 
-    visual_style = {}
+    # This finds the vertex size.
+    vertex_size = get_vertex_size(G=G, output_width=output_width, output_height=output_height)
 
-    # Compute the total number of pixels in the output plot
-    total_pixels = output_width * output_height
-    # Scale the vertex and arrow size based on the number of output pixels
-    vertex_size = min(total_pixels / ((G.vcount() * 6) + 1), 15)
-    arrow_size = 1
-    arrow_width = 1
-    visual_style["edge_arrow_size"] = arrow_size
-    visual_style["edge_arrow_width"] = arrow_width
+    # Set the arrow sizes
+    set_arrow_sizes(visual_style=visual_style)
 
     # Drop isolates if requested.
     if drop_isolates:
         G.delete_vertices(G.vs.select(_degree=0))
 
+    # Adding node labels
+    label_nodes(G=G, node_labels=node_labels)
+
+    # Find the best clustering based on modularity score.
     best_cluster = None
     if color == "comm_coloring" or contract:
         print("Starting clustering computation.")
@@ -257,16 +166,18 @@ def main():
         print("Finishing clustering algorithm run.")
         print("====================")
 
+    old_G = None
     if contract:
 
         if scale != "degree":
             old_G = G.copy()
-
+        # Set G to the cluster that was identified earlier.
         G = best_cluster.cluster_graph()
 
         print("Finished contracting graph.")
         print("====================")
 
+        # If the coloring is by community, pick a random color for each community which is now a node.
         if color == "comm_coloring":
             G.vs['color'] = np.random.choice(colors, size=(G.vcount(),), replace=True)
 
@@ -276,46 +187,20 @@ def main():
     elif color in colors:
         G.vs["color"] = color
 
-    # Set the plot attribute for node labels to the name attribute.
-    if node_labels:
-        if len(G.vs) > MAX_NODE_COUNT:
-            raise ValueError("There are too many nodes in the graph to plot the labels.")
-        G.vs["label"] = G.vs["name"]
-
-    deg = G.degree()
+    print("Running Layout Algorithm: " + str(layout_algorithm))
+    print("====================")
     layout = G.layout(layout_algorithm)
 
     print("Finished running layout algorithm.")
     print("====================")
 
-    # Scale based on node degree if requested.
-    if scale:
-        if scale != "degree":
-            # If we are not contracting into communities and these options are set, this is a problem.
-            if (scale == "comm_degree" or scale == "comm_size") and not contract:
-                raise ValueError("If scaling by community traits is requested (i.e. comm_degree or comm_size), then,"
-                                 "contract must also be true.")
-            if scale == "comm_degree":
-                # Compute inter-community degree
-                sizes = np.fromiter(
-                    (sum([sum(1 for neighbor in old_G.vs[node].neighbors() if neighbor not in best_cluster[comm.index])
-                          for node in best_cluster[comm.index]]) for comm in
-                     G.vs),
-                    dtype=float)
-                sizes = ((sizes - np.mean(sizes)) / (1 + (np.std(sizes) * 2)) * vertex_size) + vertex_size
-                G.vs["size"] = sizes
-            elif scale == "comm_size":
-                sizes = best_cluster.sizes()
-                # Scale the nodes by the size of their communities
-                G.vs["size"] = (((sizes - np.mean(sizes)) / ((2 * np.std(sizes)) + 1)) * vertex_size) + vertex_size
-            else:
-                raise Exception(scale + " is not a valid scaling style.")
-        else:
-            G.vs["size"] = (((deg - np.mean(deg)) / ((2 * np.std(deg)) + 1)) * vertex_size) + vertex_size
-        print("Finished scaling the nodes in plot.")
-        print("====================")
-    else:
-        visual_style["vertex_size"] = vertex_size
+    print("Setting the node sizes.")
+    print("====================")
+
+    scale_nodes(scale=scale, G=G, old_G=old_G, best_cluster=best_cluster, vertex_size=vertex_size)
+
+    print("Finished setting the node sizes in the plot.")
+    print("====================")
 
     # Plot the graph with the requested settings and layout.
     igraph.plot(G, layout=layout,
