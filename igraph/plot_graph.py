@@ -94,6 +94,8 @@ parser.add_argument("--ego_node_distance", type=int, default=1, required=False, 
 parser.add_argument("--subgraph_nodes", type=str, default=None, required=False, help="This should a string that "
                                                                                      "contains the path to node IDs to "
                                                                                      "include in an induced subgraph.")
+parser.add_argument("--add_subgraph_boundary", action='store_true', dest="add_subgraph_boundary", required=False,
+                    default=False, help="Add the boundary of the induced subgraph if reqested.")
 
 
 def main():
@@ -118,6 +120,9 @@ def main():
     ego_node_distance = args.ego_node_distance
     # Get the induced subgraph path
     subgraph_nodes = args.subgraph_nodes
+    add_subgraph_boundary = args.add_subgraph_boundary
+    if add_subgraph_boundary and subgraph_nodes is None:
+        raise ValueError("--add_subgraph_boundary requires that --subgraph_nodes be set first.")
 
     # Modifications to the plot
     contract = args.contract
@@ -164,8 +169,13 @@ def main():
 
     print("Beginning Graph Loading.")
     # Attempt to load the graph
-    G = load_graph(input_path=input_path, directed=directed, multi_edges=multi_edges, self_loops=self_loops,
-                   node_labels=node_labels)
+    input_format = None
+    # If the graph is an edgelist style input, use the NCOL format to keep the node IDs from the file in the "name"
+    # attribute.
+    if input_path.split(".")[-1] in ["edges", "edge", "edgelist"]:
+        input_format = "ncol"
+    G = load_graph(input_path=input_path, input_format=input_format,
+                   directed=directed, multi_edges=multi_edges, self_loops=self_loops)
     print("Graph finished loading.")
     print("======================")
 
@@ -181,7 +191,15 @@ def main():
     # Get the induced graph nodes
     if subgraph_nodes is not None:
         induced_graph_nodes = load_induced_subgraph_nodes(subgraph_nodes_path=subgraph_nodes)
-        induced_graph_nodes = G.vs.select(name_in=induced_graph_nodes)
+        induced_graph_nodes = list(G.vs.select(name_in=induced_graph_nodes))
+        boundary_nodes = []
+        # Add in the boundary nodes if requested.
+        if add_subgraph_boundary:
+            boundary_node_lists = G.neighborhood(vertices=induced_graph_nodes, mindist=1)
+            for node_list in boundary_node_lists:
+                boundary_nodes += node_list
+            induced_graph_nodes += boundary_nodes
+            induced_graph_nodes = set(induced_graph_nodes)
 
     if subgraph_nodes is not None or ego_node_center is not None:
         G = get_induced_subgraph(G=G, node_list=induced_graph_nodes)

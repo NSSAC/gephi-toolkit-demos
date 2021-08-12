@@ -121,14 +121,13 @@ def cluster(G: igraph.Graph, algo_str):
         raise ValueError("Invalid clustering algorithm name.")
 
 
-def load_graph(input_path: str, directed: bool, multi_edges: bool, self_loops: bool, node_labels: bool):
+def load_graph(input_path: str, input_format: str, directed: bool, multi_edges: bool, self_loops: bool):
     """
     A helper function used to perform the graph loading part of the plot.
     :param input_path: A string path to the input graph files.
     :param directed: A boolean that decides whether the graph is interpreted as directed.
     :param multi_edges: A boolean that decides whether the graph allows multi-edges.
     :param self_loops: A boolean that decides whether the graph allows self-loops.
-    :param node_labels: A boolean that when set treat the input file as ncol file.
     :return: The loaded igraph Graph object.
     """
     G = igraph.Graph()
@@ -136,7 +135,7 @@ def load_graph(input_path: str, directed: bool, multi_edges: bool, self_loops: b
         if input_path.split(".")[-1] in ["graphml", "graphmlz", "pickle", "gml", "dimacs"]:
             G = igraph.Graph.Load(input_path)
         else:
-            G = igraph.Graph.Load(input_path, directed=directed)
+            G = igraph.Graph.Load(input_path, directed=directed, format=input_format)
 
         # If a graph is not a simple, the graph should have multi-edges and self-loops removed if they are not allowed.
         if not multi_edges or not self_loops:
