@@ -73,10 +73,12 @@ the coloring will be applied based on the community selected for the contraction
 
 * subgraph_nodes - This is a string that contains a path to a file containing \n separated node IDs.
 If this argument is provided, the induced subgraph corresponding to these node IDs will be plotted instead of the full
-graph. Otherwise, it has no effect.
+graph. Otherwise, it has no effect. The argument should correspond with the node ID found the NCOL ( edgelist-like file 
+passed in.)
 * ego_node_center - If no argument for this is provided, it has no effect. Otherwise, it will plot only the subgraph
 consisting of the ego network with the argument as the root of the ego network. The number hops from the root node is 
-controlled by ego_node_distance.
+controlled by ego_node_distance. The argument should correspond with the node ID found the NCOL ( edgelist-like file 
+passed in.)
 * ego_node_distance - This an integer CLA that defaults to 1 and controls the ego network defined by ego_node_center. If
 ego_node_center is not passed, this argument has no effect.
 * edge_width - This is a string argument whose value, if present, will use the graph edge attributes to determine
