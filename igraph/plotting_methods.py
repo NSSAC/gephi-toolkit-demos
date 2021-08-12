@@ -70,16 +70,24 @@ def label_nodes(G: igraph.Graph, node_labels: bool, node_labels_names: list):
         G.vs["label"] = ["" for i in range(len(G.vs))]
 
 
-def label_edges(G: igraph.Graph, edge_width: str):
+def modify_edges(G: igraph.Graph, edge_width: str, edge_color: str):
     """
     This is used perform any node labelling required.
     :param G: The graph to be plotted.
     :param edge_width: The attribute to be used for edge width.
+    :param edge_color: The attribute to be used for edge color.
     :return:
     """
     # Set the plot attribute for node labels to the name attribute.
     if edge_width is not None:
-        G.vs["edge_width"] = G.vs[edge_width]
+        G.es["width"] = G.es[edge_width]
+    if edge_color is not None:
+        # We are expecting a categorical attribute here, so we find a list of all values.
+        values = set(G.es[edge_color])
+        pal = igraph.drawing.colors.RainbowPalette(n=len(values))
+        color_map = {value: color_int for color_int, value in enumerate(values)}
+        colors_to_get = list(map(lambda x: pal.get(color_map[x]), G.es[edge_color]))
+        G.es['color'] = colors_to_get
 
 
 def cluster(G: igraph.Graph, algo_str):
@@ -121,7 +129,7 @@ def cluster(G: igraph.Graph, algo_str):
         raise ValueError("Invalid clustering algorithm name.")
 
 
-def load_graph(input_path: str, input_format: str, directed: bool, multi_edges: bool, self_loops: bool):
+def load_graph(input_path: str, directed: bool, multi_edges: bool, self_loops: bool):
     """
     A helper function used to perform the graph loading part of the plot.
     :param input_path: A string path to the input graph files.
@@ -135,7 +143,10 @@ def load_graph(input_path: str, input_format: str, directed: bool, multi_edges: 
         if input_path.split(".")[-1] in ["graphml", "graphmlz", "pickle", "gml", "dimacs"]:
             G = igraph.Graph.Load(input_path)
         else:
-            G = igraph.Graph.Load(input_path, directed=directed, format=input_format)
+            if input_path.split(".")[-1] in ["edges", "edge", "edgelist", "ncol"]:
+                G = igraph.Graph.Read_Ncol(input_path, directed=directed, weights='if_present')
+
+            G = igraph.Graph.Load(input_path, directed=directed, weights='if_present')
 
         # If a graph is not a simple, the graph should have multi-edges and self-loops removed if they are not allowed.
         if not multi_edges or not self_loops:

@@ -6,7 +6,7 @@ import igraph
 import argparse
 
 from plotting_methods import load_graph, get_vertex_size, set_arrow_sizes, compute_best_clustering, scale_nodes, \
-    label_nodes, label_edges, get_ego_net, get_induced_subgraph, load_induced_subgraph_nodes
+    label_nodes, get_ego_net, get_induced_subgraph, load_induced_subgraph_nodes, modify_edges
 
 # Constants
 OUTPUT_FORMATS = ["pdf", "png", "svg", "ps", "eps"]
@@ -83,7 +83,9 @@ parser.add_argument("--node_labels_names", required=False,
                     help="This provides the names of the values to be used in node labels.")
 # This flag manages whether or not edge labels are shown.
 parser.add_argument("--edge_width", type=str, dest="edge_width", required=False, default=None,
-                    help="The edge width controlling attribute.")
+                    help="The edge attribute controlling edge width.")
+parser.add_argument("--edge_color", type=str, dest="edge_color", required=False, default=None,
+                    help="The edge attribute controlling color.")
 # Ego net parameters
 parser.add_argument("--ego_node_center", type=str, required=False, default=None,
                     help="An integer with the node ID used for the root "
@@ -146,6 +148,7 @@ def main():
     clusterings = args.cluster
     # Should the input file be interpreted with node labels for the output plot
     edge_width = args.edge_width
+    edge_color = args.edge_color
     # Should the input file be interpreted with edge labels for the output plot
     node_labels = args.node_labels
     node_labels_names = args.node_labels_names
@@ -169,15 +172,13 @@ def main():
 
     print("Beginning Graph Loading.")
     # Attempt to load the graph
-    input_format = None
-    # If the graph is an edgelist style input, use the NCOL format to keep the node IDs from the file in the "name"
-    # attribute.
-    if input_path.split(".")[-1] in ["edges", "edge", "edgelist"]:
-        input_format = "ncol"
-    G = load_graph(input_path=input_path, input_format=input_format,
+
+    G = load_graph(input_path=input_path,
                    directed=directed, multi_edges=multi_edges, self_loops=self_loops)
     print("Graph finished loading.")
     print("======================")
+
+    print(list(G.edge_attributes()))
 
     if subgraph_nodes is not None and ego_node_center is not None:
         raise ValueError("Both subgraph_nodes and ego_node_center parameters cannot be used together.")
@@ -217,7 +218,7 @@ def main():
     # Adding node labels
     label_nodes(G=G, node_labels=node_labels, node_labels_names=node_labels_names)
     # Adding edge labels
-    label_edges(G=G, edge_width=edge_width)
+    modify_edges(G=G, edge_width=edge_width, edge_color=edge_color)
 
     # Find the best clustering based on modularity score.
     best_cluster = None

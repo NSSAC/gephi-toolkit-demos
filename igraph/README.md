@@ -82,7 +82,11 @@ passed in.)
 * ego_node_distance - This an integer CLA that defaults to 1 and controls the ego network defined by ego_node_center. If
 ego_node_center is not passed, this argument has no effect.
 * edge_width - This is a string argument whose value, if present, will use the graph edge attributes to determine
-edge width in the output plot. It is recommended to graphml or a similar format for attributes.
+edge width in the output plot. It is recommended to use an edge list with this argument. This should be a numerical 
+attribute.
+* edge_color - This is a string argument whose value, if present, will use the graph edge attributes to determine
+edge color in the output plot. It is recommended to use an edge list with this argument. This should be a categorical
+attribute.
 #### Boolean Switches
 * node_labels - If this flag is set, the node labels in the input edge file are plotted on the graph.
 * node_labels_names - This provides the names of the values to be used in node labels. This is an optional argument, and
