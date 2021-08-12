@@ -85,7 +85,7 @@ parser.add_argument("--node_labels_names", required=False,
 parser.add_argument("--edge_width", type=str, dest="edge_width", required=False, default=None,
                     help="The edge width controlling attribute.")
 # Ego net parameters
-parser.add_argument("--ego_node_center", type=int, required=False, default=None,
+parser.add_argument("--ego_node_center", type=str, required=False, default=None,
                     help="An integer with the node ID used for the root "
                          "of an ego network subplot.")
 parser.add_argument("--ego_node_distance", type=int, default=1, required=False, help="The maximum distance from the "
@@ -175,10 +175,13 @@ def main():
     induced_graph_nodes = None
     # Get the ego network
     if ego_node_center is not None:
+        ego_node_center = G.vs.find(name=ego_node_center)
         induced_graph_nodes = get_ego_net(G=G, ego_node_center=ego_node_center, ego_node_distance=ego_node_distance)
+
     # Get the induced graph nodes
     if subgraph_nodes is not None:
         induced_graph_nodes = load_induced_subgraph_nodes(subgraph_nodes_path=subgraph_nodes)
+        induced_graph_nodes = G.vs.select(name_in=induced_graph_nodes)
 
     if subgraph_nodes is not None or ego_node_center is not None:
         G = get_induced_subgraph(G=G, node_list=induced_graph_nodes)

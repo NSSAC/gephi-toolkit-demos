@@ -18,7 +18,7 @@ def load_induced_subgraph_nodes(subgraph_nodes_path: str):
     """
     with open(subgraph_nodes_path, "r") as nodes_fp:
         nodes = nodes_fp.readlines()
-    return list(map(lambda x: int(float(x)), nodes))
+    return list(map(lambda x: x.strip('\n'), nodes))
 
 
 def get_induced_subgraph(G: igraph.Graph, node_list: list):
