@@ -71,9 +71,33 @@ the coloring will be applied based on the community selected for the contraction
    "magenta", "lime", "indigo", "cyan".
 3. A custom coloring scheme. - Not available yet.
 
+* subgraph_nodes - This is a string that contains a path to a file containing \n separated node IDs.
+If this argument is provided, the induced subgraph corresponding to these node IDs will be plotted instead of the full
+graph. The induced subgraph is the set of nodes and edges such that a node is in the list of subgraph nodes and an edge
+is incident on two nodes in the subgraph nodes. 
+Otherwise, it has no effect. The argument should correspond with the node ID found the NCOL ( edgelist-like file 
+passed in.)
+* ego_node_center - If no argument for this is provided, it has no effect. Otherwise, it will plot only the subgraph
+consisting of the ego network with the argument as the root of the ego network. The number hops from the root node is 
+controlled by ego_node_distance. The argument should correspond with the node ID found the NCOL ( edgelist-like file 
+passed in.)
+* ego_node_distance - This an integer CLA that defaults to 1 and controls the ego network defined by ego_node_center. If
+ego_node_center is not passed, this argument has no effect.
+* edge_width - This is a string argument whose value, if present, will use the graph edge attributes to determine
+edge width in the output plot. It is recommended to use an edge list with this argument. This should be a numerical 
+attribute.
+* edge_color - This is a string argument whose value, if present, will use the graph edge attributes to determine
+edge color in the output plot. It is recommended to use an edge list with this argument. This should be a categorical
+attribute.
 #### Boolean Switches
-
+* node_labels - If this flag is set, the node labels in the input edge file are plotted on the graph.
+* node_labels_names - This provides the names of the values to be used in node labels. This is an optional argument, and
+if node_labels is set, this will have the node name added to the list. Note that the requested node attribute values
+must be in the input edges file. It is recommended to graphml or a similar format for attributes.
 * contract - This will contract nodes into their communities as determined by the multilevel communities algorithm (Louvain-based).
+
+* add_subgraph_boundary - This will add the all nodes and edges that are incident on an edge that connects to a node in 
+the list of subgraph nodes specified by the subgraph_nodes parameter.
 
 * drop_isolates - This removes isolates. It will be run prior to any clustering.
 
@@ -86,6 +110,9 @@ the plot.
 * self_loops - This switch will allow self-loops in the output plot. If not provided, self-loops will be removed from
 the plot.
   
+* node_labels - If the input file is an edge list file, the node IDs in the edge list will be saved and used as the name
+attribute in the loaded igraph object. These names will be plotted in the output graph unless the number of nodes is too
+  high.
 ### Layout algorithm options:
 
 layout_circle

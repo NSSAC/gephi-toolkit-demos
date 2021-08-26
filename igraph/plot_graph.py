@@ -3,14 +3,12 @@ __contact__ = "hlc5v@virginia.edu"
 
 import numpy as np
 import igraph
-import warnings
 import argparse
-import traceback as tb
+
+from plotting_methods import load_graph, get_vertex_size, set_arrow_sizes, compute_best_clustering, scale_nodes, \
+    label_nodes, get_ego_net, get_induced_subgraph, load_induced_subgraph_nodes, modify_edges
 
 # Constants
-ARROW_SIZE = 1
-ARROW_WIDTH = 1
-
 OUTPUT_FORMATS = ["pdf", "png", "svg", "ps", "eps"]
 INPUT_FORMATS = ["lgl", "adjacency", "dimacs", "dl", "edgelist", "edges", "edge", "graphviz", "dot", "gml", "graphml",
                  "graphmlz", "leda", "ncol", "pajek", "net", "pickle"]
@@ -68,7 +66,7 @@ parser.add_argument("--output_height", required=False, default=1000,
 parser.add_argument("--scale", required=False, type=str, help="This string argument that takes three possible values"
                                                               ": degree, comm_degree, and comm_size. These determine"
                                                               " how nodes are scaled if at all.")
-# This flag manaages isolates.
+# This flag manages isolates.
 parser.add_argument("--drop_isolates", action='store_true', dest="drop_isolates", required=False, default=False,
                     help="If this flag is provided, the script will drop"
                          "isolates from the graph plot.")
@@ -77,163 +75,29 @@ parser.add_argument("--multi_edges", action='store_true', dest="multi_edges", re
                     help="Remove multi-edges if this flag is not set.")
 parser.add_argument("--self_loops", action='store_true', dest="self_loops", required=False, default=False,
                     help="Remove self loops if this flag is not set.")
-
-
-def cluster(G, algo_str):
-    """
-    This is a helper function to compute clusters using user-selected algorithms.
-    :param G: The input graph.
-    :param algo_str: A string saying what clustering algorithm to use.
-    :return: A clustering object.
-    """
-
-    if algo_str == "components":
-        return G.components()
-    elif algo_str == "cohesive_blocks":
-        return G.cohesive_blocks()
-    elif algo_str == "community_edge_betweenness":
-        return G.community_edge_betweenness()
-    elif algo_str == "community_fastgreedy":
-        return G.community_fastgreedy()
-    elif algo_str == "community_infomap":
-        return G.community_infomap()
-    elif algo_str == "community_label_propagation":
-        return G.community_label_propagation()
-    elif algo_str == "community_leading_eigenvector":
-        return G.community_leading_eigenvector()
-    elif algo_str == "community_leading_eigenvector_naive":
-        return G.community_leading_eigenvector_naive()
-    elif algo_str == "community_leiden":
-        return G.community_leiden()
-    elif algo_str == "community_multilevel":
-        return G.community_multilevel()
-    elif algo_str == "community_optimal_modularity":
-        return G.community_optimal_modularity()
-    elif algo_str == "community_spinglass":
-        return G.community_spinglass()
-    elif algo_str == "community_walktrap":
-        return G.community_walktrap()
-    else:
-        print(algo_str)
-        raise ValueError("Invalid clustering algorithm name.")
-
-
-def load_graph(input_path: str, directed: bool, multi_edges: bool, self_loops: bool):
-    """
-    A helper function used to perform the graph loading part of the plot.
-    :param input_path: A string path to the input graph file.
-    :param directed: A boolean that decides whether the graph is interpreted as directed.
-    :param multi_edges: A boolean that decides whether the graph allows multi-edges.
-    :param self_loops: A boolean that decides whether the graph allows self-loops
-    :return: The loaded igraph Graph object.
-    """
-    G = igraph.Graph()
-    try:
-        G = igraph.Graph.Load(input_path, directed=directed)
-        # If a graph is not a simple, the graph should have multi-edges and self-loops removed if they are not allowed.
-        if not multi_edges or not self_loops:
-            if not G.is_simple():
-                G = G.simplify(multiple=not multi_edges, loops=not self_loops)
-                warnings.warn(UserWarning("WARNING: The input graph had either self-loops or multi-edges. "
-                                          "You set allow multi-edges to : " + str(multi_edges) + ". You set allow "
-                                                                                                 "self-loops to: " + str(
-                    self_loops) + ". Those you set to false caused "
-                                  "multi-edges and/or self-loops to be removed."))
-    except Exception as e:
-        tb.print_exc()
-        print(e)
-        print("Failed to load the graph from: " + input_path)
-        exit(1)
-    finally:
-        return G
-
-
-def compute_best_clustering(G: igraph.Graph, clusterings: list):
-    """
-    Computes the best clustering using modularity score for input graph.
-    :param G: The input graph.
-    :param clusterings: The list of igraph clustering algorithms to try:
-    :return: The highest modularity score clustering found.
-    """
-    G.to_undirected()
-    warnings.warn(UserWarning("Clustering will convert the graph to undirected."))
-    # Find the best clustering from all of those provided.
-    best_cluster = None
-    best_score = 0
-    for clustering in clusterings:
-        if best_cluster is None:
-            best_cluster = cluster(G, clustering)
-            best_score = float(best_cluster.modularity)
-        else:
-            curr_cluster = cluster(G, clustering)
-            curr_score = float(curr_cluster.modularity)
-            if best_score < float(curr_score):
-                best_cluster = curr_cluster
-                best_score = curr_score
-    return best_cluster
-
-
-def set_arrow_sizes(visual_style):
-    """
-    This sets the sizes of arrows using the constants defined above.
-    :param visual_style: The visual sytle dictionary being used in the plot method.
-    :return: None
-    """
-    # Compute the total number of pixels in the output plot
-
-    visual_style["edge_arrow_size"] = ARROW_SIZE
-    visual_style["edge_arrow_width"] = ARROW_WIDTH
-
-
-def get_vertex_size(G, output_width: int, output_height: int):
-    """
-    This computes the vertex size based on the output size and graph properties.
-    :param G: The graph to plot.
-    :param output_width: The output width in pixels
-    :param output_height: The output height in pixels
-    :return: The vertex size in pixels
-    """
-
-    # Compute the total number of pixels in the output plot
-    total_pixels = output_width * output_height
-    # Scale the vertex and arrow size based on the number of output pixels
-    vertex_size = min(total_pixels / ((G.vcount() * 6) + 1), 15)
-    return vertex_size
-
-
-def scale_nodes(scale: str, G: igraph.Graph, old_G: igraph.Graph, best_cluster, vertex_size: float):
-    """
-    This performs the node scaling if required.
-    :param G: The current graph.
-    :param scale: The scaling argument. Indicates which type of scaling to perform.
-    :param old_G: The graph before contraction.
-    :param best_cluster: The best clustering that was found.
-    :param vertex_size: The base vertex size in pixels
-    :return: None
-    """
-    if scale != "degree":
-
-        if scale == "comm_degree":
-            if old_G is None:
-                raise ValueError("The old_G is None and scaling is being performed by community degree.")
-
-            # Compute inter-community degree
-            sizes = np.fromiter(
-                (sum([sum(1 for neighbor in old_G.vs[node].neighbors() if neighbor not in best_cluster[comm.index])
-                      for node in best_cluster[comm.index]]) for comm in
-                 G.vs),
-                dtype=float)
-        elif scale == "comm_size":
-            sizes = best_cluster.sizes()
-            # Scale the nodes by the size of their communities
-        else:
-            raise Exception(scale + " is not a valid scaling style.")
-    else:
-        deg = G.degree()
-        sizes = deg
-
-    sizes = (((sizes - np.mean(sizes)) / ((2 * np.std(sizes)) + 1)) * vertex_size) + vertex_size
-    G.vs["size"] = sizes
+# This flag manages whether or not node labels are shown.
+parser.add_argument("--node_labels", action="store_true", dest="node_labels", required=False, default=False,
+                    help="If this flag is set, the node labels in the input edge file are plotted on the graph.")
+parser.add_argument("--node_labels_names", required=False,
+                    type=str, nargs="*", default=[],
+                    help="This provides the names of the values to be used in node labels.")
+# This flag manages whether or not edge labels are shown.
+parser.add_argument("--edge_width", type=str, dest="edge_width", required=False, default=None,
+                    help="The edge attribute controlling edge width.")
+parser.add_argument("--edge_color", type=str, dest="edge_color", required=False, default=None,
+                    help="The edge attribute controlling color.")
+# Ego net parameters
+parser.add_argument("--ego_node_center", type=str, required=False, default=None,
+                    help="An integer with the node ID used for the root "
+                         "of an ego network subplot.")
+parser.add_argument("--ego_node_distance", type=int, default=1, required=False, help="The maximum distance from the "
+                                                                                     "root of the ego network.")
+# A file containing nodes in an induced subgraph.
+parser.add_argument("--subgraph_nodes", type=str, default=None, required=False, help="This should a string that "
+                                                                                     "contains the path to node IDs to "
+                                                                                     "include in an induced subgraph.")
+parser.add_argument("--add_subgraph_boundary", action='store_true', dest="add_subgraph_boundary", required=False,
+                    default=False, help="Add the boundary of the induced subgraph if requested.")
 
 
 def main():
@@ -253,16 +117,26 @@ def main():
         print(
             "The input file extension is " + output_path.split(".")[-1].lower() + " is not a supported output format.")
         raise TypeError("The output file extension should be one of: " + str(OUTPUT_FORMATS))
+    # The ego network parameters
+    ego_node_center = args.ego_node_center
+    ego_node_distance = args.ego_node_distance
+    # Get the induced subgraph path
+    subgraph_nodes = args.subgraph_nodes
+    add_subgraph_boundary = args.add_subgraph_boundary
+    if add_subgraph_boundary and subgraph_nodes is None:
+        raise ValueError("--add_subgraph_boundary requires that --subgraph_nodes be set first.")
 
     # Modifications to the plot
     contract = args.contract
     color = args.color
     scale = args.scale
+    if directed and (scale == "clustering_coefficient"):
+        raise ValueError("Scaling by clustering coefficient is not allowed with directed graphs.")
     # If we are not contracting into communities and these options are set, this is a problem.
     if (scale == "comm_degree" or scale == "comm_size") and not contract:
         raise ValueError("If scaling by community traits is requested (i.e. comm_degree or comm_size), then,"
                          "contract must also be true.")
-
+    # Boolean switches to decide what is allowed in the graph.
     drop_isolates = args.drop_isolates
     self_loops = args.self_loops
     multi_edges = args.multi_edges
@@ -274,6 +148,24 @@ def main():
     layout_algorithm = args.layout_algorithm
     # The clustering algorithm to try.
     clusterings = args.cluster
+    # Should the input file be interpreted with node labels for the output plot
+    edge_width = args.edge_width
+    edge_color = args.edge_color
+    # Should the input file be interpreted with edge labels for the output plot
+    node_labels = args.node_labels
+    node_labels_names = args.node_labels_names
+    # Ensure that plotting node labels is actually possible.
+    if node_labels or node_labels_names:
+        if contract:
+            raise ValueError(
+                "The --node_labels and --contract flags cannot both be set. This would result in invalid node "
+                "labels.")
+    # Ensure that plotting edge labels is actually possible.
+    if edge_width is not None:
+        if contract:
+            raise ValueError(
+                "The --edge_labels and --contract flags cannot both be set. This would result in invalid edge "
+                "labels.")
 
     # Initialize the visual style object that will be used to set the plot parameters.
     visual_style = {}
@@ -282,10 +174,36 @@ def main():
 
     print("Beginning Graph Loading.")
     # Attempt to load the graph
-    G = load_graph(input_path=input_path, directed=directed, multi_edges=multi_edges, self_loops=self_loops)
 
+    G = load_graph(input_path=input_path,
+                   directed=directed, multi_edges=multi_edges, self_loops=self_loops)
     print("Graph finished loading.")
     print("======================")
+
+    if subgraph_nodes is not None and ego_node_center is not None:
+        raise ValueError("Both subgraph_nodes and ego_node_center parameters cannot be used together.")
+
+    induced_graph_nodes = None
+    # Get the ego network
+    if ego_node_center is not None:
+        ego_node_center = G.vs.find(name=ego_node_center)
+        induced_graph_nodes = get_ego_net(G=G, ego_node_center=ego_node_center, ego_node_distance=ego_node_distance)
+
+    # Get the induced graph nodes
+    if subgraph_nodes is not None:
+        induced_graph_nodes = load_induced_subgraph_nodes(subgraph_nodes_path=subgraph_nodes)
+        induced_graph_nodes = list(G.vs.select(name_in=induced_graph_nodes))
+        boundary_nodes = []
+        # Add in the boundary nodes if requested.
+        if add_subgraph_boundary:
+            boundary_node_lists = G.neighborhood(vertices=induced_graph_nodes, mindist=1)
+            for node_list in boundary_node_lists:
+                boundary_nodes += node_list
+            induced_graph_nodes += boundary_nodes
+            induced_graph_nodes = set(induced_graph_nodes)
+
+    if subgraph_nodes is not None or ego_node_center is not None:
+        G = get_induced_subgraph(G=G, node_list=induced_graph_nodes)
 
     # This finds the vertex size.
     vertex_size = get_vertex_size(G=G, output_width=output_width, output_height=output_height)
@@ -296,6 +214,11 @@ def main():
     # Drop isolates if requested.
     if drop_isolates:
         G.delete_vertices(G.vs.select(_degree=0))
+
+    # Adding node labels
+    label_nodes(G=G, node_labels=node_labels, node_labels_names=node_labels_names)
+    # Adding edge labels
+    modify_edges(G=G, edge_width=edge_width, edge_color=edge_color)
 
     # Find the best clustering based on modularity score.
     best_cluster = None
@@ -333,17 +256,13 @@ def main():
     print("Finished running layout algorithm.")
     print("====================")
 
-    # Scale based on node degree if requested.
-    if scale:
-        print("Scaling the nodes in plot.")
-        print("====================")
+    print("Setting the node sizes.")
+    print("====================")
 
-        scale_nodes(scale=scale, G=G, old_G=old_G, best_cluster=best_cluster, vertex_size=vertex_size)
+    scale_nodes(scale=scale, G=G, old_G=old_G, best_cluster=best_cluster, vertex_size=vertex_size, directed=directed)
 
-        print("Finished scaling the nodes in plot.")
-        print("====================")
-    else:
-        visual_style["vertex_size"] = vertex_size
+    print("Finished setting the node sizes in the plot.")
+    print("====================")
 
     # Plot the graph with the requested settings and layout.
     igraph.plot(G, layout=layout,
