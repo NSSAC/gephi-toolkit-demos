@@ -97,7 +97,7 @@ parser.add_argument("--subgraph_nodes", type=str, default=None, required=False, 
                                                                                      "contains the path to node IDs to "
                                                                                      "include in an induced subgraph.")
 parser.add_argument("--add_subgraph_boundary", action='store_true', dest="add_subgraph_boundary", required=False,
-                    default=False, help="Add the boundary of the induced subgraph if reqested.")
+                    default=False, help="Add the boundary of the induced subgraph if requested.")
 
 
 def main():
@@ -130,6 +130,8 @@ def main():
     contract = args.contract
     color = args.color
     scale = args.scale
+    if directed and (scale == "clustering_coefficient"):
+        raise ValueError("Scaling by clustering coefficient is not allowed with directed graphs.")
     # If we are not contracting into communities and these options are set, this is a problem.
     if (scale == "comm_degree" or scale == "comm_size") and not contract:
         raise ValueError("If scaling by community traits is requested (i.e. comm_degree or comm_size), then,"
@@ -177,8 +179,6 @@ def main():
                    directed=directed, multi_edges=multi_edges, self_loops=self_loops)
     print("Graph finished loading.")
     print("======================")
-
-    print(list(G.edge_attributes()))
 
     if subgraph_nodes is not None and ego_node_center is not None:
         raise ValueError("Both subgraph_nodes and ego_node_center parameters cannot be used together.")
@@ -259,7 +259,7 @@ def main():
     print("Setting the node sizes.")
     print("====================")
 
-    scale_nodes(scale=scale, G=G, old_G=old_G, best_cluster=best_cluster, vertex_size=vertex_size)
+    scale_nodes(scale=scale, G=G, old_G=old_G, best_cluster=best_cluster, vertex_size=vertex_size, directed=directed)
 
     print("Finished setting the node sizes in the plot.")
     print("====================")

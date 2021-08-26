@@ -146,7 +146,7 @@ def load_graph(input_path: str, directed: bool, multi_edges: bool, self_loops: b
             if input_path.split(".")[-1] in ["edges", "edge", "edgelist", "ncol"]:
                 G = igraph.Graph.Read_Ncol(input_path, directed=directed, weights='if_present')
 
-            G = igraph.Graph.Load(input_path, directed=directed, weights='if_present')
+            G = igraph.Graph.Load(input_path, directed=directed)
 
         # If a graph is not a simple, the graph should have multi-edges and self-loops removed if they are not allowed.
         if not multi_edges or not self_loops:
@@ -219,7 +219,7 @@ def get_vertex_size(G, output_width: int, output_height: int):
     return vertex_size
 
 
-def scale_nodes(scale: str, G: igraph.Graph, old_G: igraph.Graph, best_cluster, vertex_size: float):
+def scale_nodes(scale: str, G: igraph.Graph, old_G: igraph.Graph, best_cluster, vertex_size: float, directed: bool):
     """
     This performs the node scaling if required.
     :param G: The current graph.
@@ -227,30 +227,79 @@ def scale_nodes(scale: str, G: igraph.Graph, old_G: igraph.Graph, best_cluster, 
     :param old_G: The graph before contraction.
     :param best_cluster: The best clustering that was found.
     :param vertex_size: The base vertex size in pixels
+    :param directed: The directed argument is used to determine node structural properties.
     :return: None
     """
     if scale:
-        if scale != "degree":
 
-            if scale == "comm_degree":
-                if old_G is None:
-                    raise ValueError("The old_G is None and scaling is being performed by community degree.")
+        if scale == "comm_degree":
+            if old_G is None:
+                raise ValueError("The old_G is None and scaling is being performed by community degree.")
 
-                # Compute inter-community degree
-                sizes = np.fromiter(
-                    (sum([sum(1 for neighbor in old_G.vs[node].neighbors() if neighbor not in best_cluster[comm.index])
-                          for node in best_cluster[comm.index]]) for comm in
-                     G.vs),
-                    dtype=float)
-            elif scale == "comm_size":
-                sizes = best_cluster.sizes()
-                # Scale the nodes by the size of their communities
-            else:
-                raise Exception(scale + " is not a valid scaling style.")
-        else:
+            # Compute inter-community degree
+            sizes = np.fromiter(
+                (sum([sum(1 for neighbor in old_G.vs[node].neighbors() if neighbor not in best_cluster[comm.index])
+                      for node in best_cluster[comm.index]]) for comm in
+                 G.vs),
+                dtype=float)
+        elif scale == "comm_size":
+            sizes = best_cluster.sizes()
+            # Scale the nodes by the size of their communities
+
+        elif scale == "degree":
             deg = G.degree()
             sizes = deg
 
+        elif scale == "k_core":
+            k_cores = G.coreness(shell_index='all')
+            sizes = k_cores
+
+        elif scale == "clustering_coefficient":
+            clustering_coefficients = G.transitivity_local_undirected()
+            sizes = clustering_coefficients
+
+        elif scale == "betweenness":
+            betweenness = G.betweenness(directed=directed)
+            sizes = betweenness
+
+        elif scale == "closeness":
+            closeness = G.closeness()
+            sizes = closeness
+
+        elif scale == "page_rank":
+            page_rank = G.pagerank(directed=directed)
+            sizes = page_rank
+
+        elif scale == "assortativity":
+            assortativity = G.assortativity(directed=directed)
+            sizes = assortativity
+
+        elif scale == "hub_score":
+            hub_score = G.hub_score()
+            sizes = hub_score
+
+        elif scale == "authority_score":
+            authority_score = G.authority_score()
+            sizes = authority_score
+
+        elif scale == "eccentricity":
+            eccentricity = G.eccentricity()
+            # The higher a node's eccentricity, smaller it should be.
+            eccentricity = list(map(lambda x: 1 / x, eccentricity))
+            sizes = eccentricity
+
+        elif scale == "constraint":
+            constraint = G.constraint()
+            # The higher a node's constraint, smaller it should be.
+            constraint = list(map(lambda x: 1 / x, constraint))
+            sizes = constraint
+
+        elif scale == "harmonic_centrality":
+            harmonic_centrality = G.harmonic_centrality()
+            sizes = harmonic_centrality
+
+        else:
+            raise Exception(scale + " is not a valid scaling style.")
         sizes = (((sizes - np.mean(sizes)) / ((2 * np.std(sizes)) + 1)) * vertex_size) + vertex_size
         G.vs["size"] = sizes
     else:

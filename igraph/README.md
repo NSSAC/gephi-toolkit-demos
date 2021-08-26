@@ -73,7 +73,9 @@ the coloring will be applied based on the community selected for the contraction
 
 * subgraph_nodes - This is a string that contains a path to a file containing \n separated node IDs.
 If this argument is provided, the induced subgraph corresponding to these node IDs will be plotted instead of the full
-graph. Otherwise, it has no effect. The argument should correspond with the node ID found the NCOL ( edgelist-like file 
+graph. The induced subgraph is the set of nodes and edges such that a node is in the list of subgraph nodes and an edge
+is incident on two nodes in the subgraph nodes. 
+Otherwise, it has no effect. The argument should correspond with the node ID found the NCOL ( edgelist-like file 
 passed in.)
 * ego_node_center - If no argument for this is provided, it has no effect. Otherwise, it will plot only the subgraph
 consisting of the ego network with the argument as the root of the ego network. The number hops from the root node is 
@@ -93,6 +95,9 @@ attribute.
 if node_labels is set, this will have the node name added to the list. Note that the requested node attribute values
 must be in the input edges file. It is recommended to graphml or a similar format for attributes.
 * contract - This will contract nodes into their communities as determined by the multilevel communities algorithm (Louvain-based).
+
+* add_subgraph_boundary - This will add the all nodes and edges that are incident on an edge that connects to a node in 
+the list of subgraph nodes specified by the subgraph_nodes parameter.
 
 * drop_isolates - This removes isolates. It will be run prior to any clustering.
 
