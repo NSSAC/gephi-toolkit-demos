@@ -251,7 +251,7 @@ def scale_nodes(scale: str, G: igraph.Graph, old_G: igraph.Graph, best_cluster, 
             sizes = deg
 
         elif scale == "k_core":
-            k_cores = G.coreness(shell_index='all')
+            k_cores = G.coreness()
             sizes = k_cores
 
         elif scale == "clustering_coefficient":
