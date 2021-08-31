@@ -143,20 +143,21 @@ def load_graph(input_path: str, directed: bool, multi_edges: bool, self_loops: b
         if input_path.split(".")[-1] in ["graphml", "graphmlz", "pickle", "gml", "dimacs"]:
             G = igraph.Graph.Load(input_path)
         else:
+            # All edge list style inputs should be interpreted as the ncol format.
             if input_path.split(".")[-1] in ["edges", "edge", "edgelist", "ncol"]:
                 G = igraph.Graph.Read_Ncol(input_path, directed=directed, weights='if_present')
 
             G = igraph.Graph.Load(input_path, directed=directed)
 
-        # If a graph is not a simple, the graph should have multi-edges and self-loops removed if they are not allowed.
+        # If a graph is not a simple graph,
+        # the graph should have multi-edges and self-loops removed if they are not allowed.
         if not multi_edges or not self_loops:
             if not G.is_simple():
                 G = G.simplify(multiple=not multi_edges, loops=not self_loops)
                 warnings.warn(UserWarning("WARNING: The input graph had either self-loops or multi-edges. "
                                           "You set allow multi-edges to : " + str(multi_edges) + ". You set allow "
-                                                                                                 "self-loops to: " + str(
-                    self_loops) + ". Those you set to false caused "
-                                  "multi-edges and/or self-loops to be removed."))
+                                          "self-loops to: " + str(self_loops) + ". Those you set to false caused "
+                                          "multi-edges and/or self-loops to be removed."))
     except Exception as e:
         tb.print_exc()
         print(e)
@@ -217,6 +218,16 @@ def get_vertex_size(G, output_width: int, output_height: int):
     # Scale the vertex and arrow size based on the number of output pixels
     vertex_size = min(total_pixels / ((G.vcount() * 6) + 1), 15)
     return vertex_size
+
+
+def normalize_sizes(sizes: list, vertex_size: float):
+    """
+    This will take input sizes and normalize them.
+    :param sizes: Sizes should be a list of node sizes.
+    :param vertex_size: The base vertex size.
+    :return: Normalized sizes.
+    """
+    return (((sizes - np.mean(sizes)) / ((2 * np.std(sizes)) + 1)) * vertex_size) + vertex_size
 
 
 def scale_nodes(scale: str, G: igraph.Graph, old_G: igraph.Graph, best_cluster, vertex_size: float, directed: bool):
@@ -300,7 +311,8 @@ def scale_nodes(scale: str, G: igraph.Graph, old_G: igraph.Graph, best_cluster, 
 
         else:
             raise Exception(scale + " is not a valid scaling style.")
-        sizes = (((sizes - np.mean(sizes)) / ((2 * np.std(sizes)) + 1)) * vertex_size) + vertex_size
-        G.vs["size"] = sizes
+        # Normalize the base sizes from the vertex properties.
+        normalized_sizes = normalize_sizes(sizes=sizes, vertex_size=vertex_size)
+        G.vs["size"] = normalized_sizes
     else:
         G.vs["size"] = vertex_size
