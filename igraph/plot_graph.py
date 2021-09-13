@@ -1,3 +1,7 @@
+"""
+This is the driver file for plotting graphs used in the GraphPlot tool.
+"""
+
 __author__ = "Henry Carscadden"
 __contact__ = "hlc5v@virginia.edu"
 

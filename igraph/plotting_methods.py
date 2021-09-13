@@ -1,3 +1,7 @@
+"""
+This contains helper methods for the plot_graph.py file. They simplify the main driver file.
+"""
+
 import warnings
 import traceback as tb
 
@@ -84,6 +88,7 @@ def modify_edges(G: igraph.Graph, edge_width: str, edge_color: str):
     if edge_color is not None:
         # We are expecting a categorical attribute here, so we find a list of all values.
         values = set(G.es[edge_color])
+        # This gets the color mapping for the edges.
         pal = igraph.drawing.colors.RainbowPalette(n=len(values))
         color_map = {value: color_int for color_int, value in enumerate(values)}
         colors_to_get = list(map(lambda x: pal.get(color_map[x]), G.es[edge_color]))
