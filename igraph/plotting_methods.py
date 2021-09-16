@@ -109,8 +109,6 @@ def cluster(G: igraph.Graph, algo_str):
         return G.cohesive_blocks()
     elif algo_str == "community_edge_betweenness":
         return G.community_edge_betweenness()
-    elif algo_str == "community_fastgreedy":
-        return G.community_fastgreedy()
     elif algo_str == "community_infomap":
         return G.community_infomap()
     elif algo_str == "community_label_propagation":

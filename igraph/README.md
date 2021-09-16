@@ -6,7 +6,10 @@
 	
   1. [Required Arguments](#required-arguments)
   2. [Optional Arguments](#optional-arguments)
-     1. [Layout Algorithm Options](#layout-algorithm-options)
+     1. [Value-Based Arguments](#value-arguments) (These are arguments that are more than a command-line switch)
+        1. [Layout Algorithm Options](#layout-algorithm-options)
+     2. [Boolean Switch Arguments](#boolean-switches) (These are arguments that just boolean switches.)
+  3. [Example Invocations](#example-invocations)
 
 # Dependencies 
 Please use conda on the igraph/requirements.txt file.
@@ -54,121 +57,127 @@ Please use conda on the igraph/requirements.txt file.
 
 ## Optional Arguments
 
+### Value Arguments
+
 * algo - This sets the layout algorithm. Selection should come from the next section.
 	
-	### Layout Algorithm Options:
-	~~~~
-	layout_circle
+    #### Layout Algorithm Options:
+    ~~~~
+    layout_circle
 		
 	
-	circle, circular
+    circle, circular
 		
 	
-	Deterministic layout that places the vertices on a circle
-	----------	
-	layout_drl
+    Deterministic layout that places the vertices on a circle
+    ----------	
+    layout_drl
 	
 	
-	drl
+    drl
 		
 	
-	The Distributed Recursive Layout algorithm for large graphs
-	----------	
-	layout_fruchterman_reingold
+    The Distributed Recursive Layout algorithm for large graphs
+    ----------	
+    layout_fruchterman_reingold
 		
 	
-	fr
+    fr
 		
 	
-	Fruchterman-Reingold force-directed algorithm
-	----------	
-	layout_fruchterman_reingold_3d
+    Fruchterman-Reingold force-directed algorithm
+    ----------	
+    layout_fruchterman_reingold_3d
 		
 	
-	fr3d, fr_3d
+    fr3d, fr_3d
 		
 	
-	Fruchterman-Reingold force-directed algorithm in three dimensions
-	----------	
-	layout_grid_fruchterman_reingold
+    Fruchterman-Reingold force-directed algorithm in three dimensions
+    ----------	
+    layout_grid_fruchterman_reingold
 		
 	
-	grid_fr
+    grid_fr
 		
 	
-	Fruchterman-Reingold force-directed algorithm with grid heuristics for large graphs
-	----------	
-	layout_kamada_kawai
+    Fruchterman-Reingold force-directed algorithm with grid heuristics for large graphs
+    ----------	
+    layout_kamada_kawai
 		
 	
-	kk
+    kk
 		
 	
-	Kamada-Kawai force-directed algorithm
-	----------	
-	layout_kamada_kawai_3d
+    Kamada-Kawai force-directed algorithm
+    ----------	
+    layout_kamada_kawai_3d
 		
 	
-	kk3d, kk_3d
+    kk3d, kk_3d
 		
 	
-	Kamada-Kawai force-directed algorithm in three dimensions
-	----------	
-	layout_lgl
+    Kamada-Kawai force-directed algorithm in three dimensions
+    ----------	
+    layout_lgl
 		
 	
-	large, lgl, large_graph
+    large, lgl, large_graph
 		
 	
-	The Large Graph Layout algorithm for large graphs
-	----------	
-	layout_random
+    The Large Graph Layout algorithm for large graphs
+    ----------	
+    layout_random
 		
 	
-	random
+    random
 		
 	
-	Places the vertices completely randomly
-	----------	
-	layout_random_3d
+    Places the vertices completely randomly
+    ----------	
+    layout_random_3d
 		
 	
-	random_3d
+    random_3d
 		
 	
-	Places the vertices completely randomly in 3D
-	----------	
-	layout_reingold_tilford
+    Places the vertices completely randomly in 3D
+    ----------	
+    layout_reingold_tilford
 		
 	
-	rt, tree
+    rt, tree
 		
 	
-	Reingold-Tilford tree layout, useful for (almost) tree-like graphs
-	----------	
-	layout_reingold_tilford_circular
+    Reingold-Tilford tree layout, useful for (almost) tree-like graphs
+    ----------	
+    layout_reingold_tilford_circular
 		
 	
-	rt_circular
+    rt_circular
 	
-	tree
+    tree
 		
 	
-	Reingold-Tilford tree layout with a polar coordinate post-transformation, useful for (almost) tree-like graphs
-	----------	
-	layout_sphere
+    Reingold-Tilford tree layout with a polar coordinate post-transformation, useful for (almost) tree-like graphs
+    ----------	
+    layout_sphere
 		
 	
-	sphere, spherical, circular_3d
+    sphere, spherical, circular_3d
 		
 	
-	Deterministic layout that places the vertices evenly on the surface of a sphere
-	----------	
+    Deterministic layout that places the vertices evenly on the surface of a sphere
+    ----------	
+    ~~~~
 
+  
 * cluster - This takes a list of graph clustering algorithm names. They should be selected from: components the connected components, cohesive_blocks, community_edge_betweenness,
-                        community_fastgreedy, community_infomap, community_label_propagation, community_leading_eigenvector, community_leading_eigenvector_naive, community_leiden,
-                        community_multilevel (a version of Louvain), community_optimal_modularity (exact solution, < 100 vertices), community_spinglass, community_walktrap. If none is selected
-                        community_multilevel is used. The best is selected by modularity score.
+                          community_infomap, community_label_propagation, community_leading_eigenvector, community_leading_eigenvector_naive, community_leiden,
+                          community_multilevel (a version of Louvain), community_optimal_modularity (exact solution, < 100 vertices), community_spinglass, community_walktrap. If none is selected
+                          community_multilevel is used. The best is selected by modularity score.
+  
+  	*  **WARNING**: community_fastgreedy is not included because the return type does not have a modularity score.
 
 
 * output width - Sets the output width in pixels.
@@ -210,7 +219,9 @@ attribute.
 * edge_color - This is a string argument whose value, if present, will use the graph edge attributes to determine
 edge color in the output plot. It is recommended to use an edge list with this argument. This should be a categorical
 attribute.
+
 #### Boolean Switches
+
 * node_labels - If this flag is set, the node labels in the input edge file are plotted on the graph.
 * node_labels_names - This provides the names of the values to be used in node labels. This is an optional argument, and
 if node_labels is set, this will have the node name added to the list. Note that the requested node attribute values
@@ -235,3 +246,52 @@ the plot.
 attribute in the loaded igraph object. These names will be plotted in the output graph unless the number of nodes is too
   high.
 
+# Example Invocations
+
+**NOTE**: All invocations are made with the `igraph` directory as the root.
+
+
+## Minimal Invocation
+
+Here, we will see an example of how to plot with a minimal amount of configuration.
+
+`
+ python plot_graph.py --input_path demo_net_inputs/rec-amazon.edges --output_path demo_net_plots/rec-amazon.simple.pdf 
+`
+
+This takes the demo_net_inputs/rec-amazon.edges network and plots it using the pre-set identified above.
+
+
+## Boolean Switch Example
+
+
+There are several boolean switches that are described in the [switches section](#boolean-switches). We will demonstrate
+the use of `--contract`. This switch can work in conjunction with the `--cluster` argument which is a list of clustering
+algorithms to run. If `--cluster` is not present, we default to using the multi-level Louvain algorithm. Here is 
+an example of that:
+
+`python plot_graph.py --input_path demo_net_inputs/rec-amazon.edges --output_path demo_net_plots/rec-amazon.simple.pdf --contract`
+
+If `--cluster` is present, we choose the algorithm that provides the best clustering as ranked by modularity score. Here is 
+an example of that:
+
+```
+python plot_graph.py --input_path demo_net_inputs/rec-amazon.edges --output_path demo_net_plots/rec-amazon.simple.pdf --contract --cluster community_multilevel community_leading_eigenvector
+```
+
+
+### Node Labelling Examples
+
+To plot with node labels, first, ensure that you are using one of the edgelist formats or another format such GraphML
+that can handle node attributes. GraphML supports rich attributes, so we start with an example of that. We first set the 
+`--node_labels` flag without setting `--node_labels_names`. This will default to showing the `name` attribute.
+
+```
+python plot_graph.py --input_path demo_net_inputs/test.graphml --output_path demo_net_plots/test.graphml.node_label.pdf --node_labels
+```
+
+Now, we will provide a list of attributes with `--node_labels_names`:
+
+```
+python plot_graph.py --input_path demo_net_inputs/test.graphml --output_path demo_net_plots/test.graphml.node_label.pdf --node_labels --node_labels_names Country label
+```
