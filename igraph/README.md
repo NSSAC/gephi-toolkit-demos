@@ -1,7 +1,19 @@
-### Dependencies 
-Please use conda on the requirements.txt file.
+# Contents
 
-### Required Arguments
+* [Dependencies](#dependencies)
+
+* [Arguments](#arguments) (This details the command arguments.)
+	
+  1. [Required Arguments](#required-arguments)
+  2. [Optional Arguments](#optional-arguments)
+     1. [Layout Algorithm Options](#layout-algorithm-options)
+
+# Dependencies 
+Please use conda on the igraph/requirements.txt file.
+
+# Arguments
+
+## Required Arguments
 
 * Input path: The path an input file this should be one accepted by the following readers:
 	
@@ -40,9 +52,118 @@ Please use conda on the requirements.txt file.
 		* ps or eps
 
 
-### Optional Arguments
+## Optional Arguments
 
 * algo - This sets the layout algorithm. Selection should come from the next section.
+	
+	### Layout Algorithm Options:
+	~~~~
+	layout_circle
+		
+	
+	circle, circular
+		
+	
+	Deterministic layout that places the vertices on a circle
+	----------	
+	layout_drl
+	
+	
+	drl
+		
+	
+	The Distributed Recursive Layout algorithm for large graphs
+	----------	
+	layout_fruchterman_reingold
+		
+	
+	fr
+		
+	
+	Fruchterman-Reingold force-directed algorithm
+	----------	
+	layout_fruchterman_reingold_3d
+		
+	
+	fr3d, fr_3d
+		
+	
+	Fruchterman-Reingold force-directed algorithm in three dimensions
+	----------	
+	layout_grid_fruchterman_reingold
+		
+	
+	grid_fr
+		
+	
+	Fruchterman-Reingold force-directed algorithm with grid heuristics for large graphs
+	----------	
+	layout_kamada_kawai
+		
+	
+	kk
+		
+	
+	Kamada-Kawai force-directed algorithm
+	----------	
+	layout_kamada_kawai_3d
+		
+	
+	kk3d, kk_3d
+		
+	
+	Kamada-Kawai force-directed algorithm in three dimensions
+	----------	
+	layout_lgl
+		
+	
+	large, lgl, large_graph
+		
+	
+	The Large Graph Layout algorithm for large graphs
+	----------	
+	layout_random
+		
+	
+	random
+		
+	
+	Places the vertices completely randomly
+	----------	
+	layout_random_3d
+		
+	
+	random_3d
+		
+	
+	Places the vertices completely randomly in 3D
+	----------	
+	layout_reingold_tilford
+		
+	
+	rt, tree
+		
+	
+	Reingold-Tilford tree layout, useful for (almost) tree-like graphs
+	----------	
+	layout_reingold_tilford_circular
+		
+	
+	rt_circular
+	
+	tree
+		
+	
+	Reingold-Tilford tree layout with a polar coordinate post-transformation, useful for (almost) tree-like graphs
+	----------	
+	layout_sphere
+		
+	
+	sphere, spherical, circular_3d
+		
+	
+	Deterministic layout that places the vertices evenly on the surface of a sphere
+	----------	
 
 * cluster - This takes a list of graph clustering algorithm names. They should be selected from: components the connected components, cohesive_blocks, community_edge_betweenness,
                         community_fastgreedy, community_infomap, community_label_propagation, community_leading_eigenvector, community_leading_eigenvector_naive, community_leiden,
@@ -113,111 +234,4 @@ the plot.
 * node_labels - If the input file is an edge list file, the node IDs in the edge list will be saved and used as the name
 attribute in the loaded igraph object. These names will be plotted in the output graph unless the number of nodes is too
   high.
-### Layout algorithm options:
 
-layout_circle
-	
-
-circle, circular
-	
-
-Deterministic layout that places the vertices on a circle
-----------	
-layout_drl
-
-
-drl
-	
-
-The Distributed Recursive Layout algorithm for large graphs
-----------	
-layout_fruchterman_reingold
-	
-
-fr
-	
-
-Fruchterman-Reingold force-directed algorithm
-----------	
-layout_fruchterman_reingold_3d
-	
-
-fr3d, fr_3d
-	
-
-Fruchterman-Reingold force-directed algorithm in three dimensions
-----------	
-layout_grid_fruchterman_reingold
-	
-
-grid_fr
-	
-
-Fruchterman-Reingold force-directed algorithm with grid heuristics for large graphs
-----------	
-layout_kamada_kawai
-	
-
-kk
-	
-
-Kamada-Kawai force-directed algorithm
-----------	
-layout_kamada_kawai_3d
-	
-
-kk3d, kk_3d
-	
-
-Kamada-Kawai force-directed algorithm in three dimensions
-----------	
-layout_lgl
-	
-
-large, lgl, large_graph
-	
-
-The Large Graph Layout algorithm for large graphs
-----------	
-layout_random
-	
-
-random
-	
-
-Places the vertices completely randomly
-----------	
-layout_random_3d
-	
-
-random_3d
-	
-
-Places the vertices completely randomly in 3D
-----------	
-layout_reingold_tilford
-	
-
-rt, tree
-	
-
-Reingold-Tilford tree layout, useful for (almost) tree-like graphs
-----------	
-layout_reingold_tilford_circular
-	
-
-rt_circular
-
-tree
-	
-
-Reingold-Tilford tree layout with a polar coordinate post-transformation, useful for (almost) tree-like graphs
-----------	
-layout_sphere
-	
-
-sphere, spherical, circular_3d
-	
-
-Deterministic layout that places the vertices evenly on the surface of a sphere
-----------	

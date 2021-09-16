@@ -10,7 +10,7 @@ module load anaconda
 source activate graph-plot
 
 
-for graph in $(ls input_nets/*.edges)
+for graph in $(ls demo_net_inputs/*.edges)
 do 
    echo $graph
    echo $( basename $graph)
