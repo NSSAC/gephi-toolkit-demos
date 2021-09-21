@@ -149,8 +149,8 @@ def load_graph(input_path: str, directed: bool, multi_edges: bool, self_loops: b
             # All edge list style inputs should be interpreted as the ncol format.
             if input_path.split(".")[-1] in ["edges", "edge", "edgelist", "ncol"]:
                 G = igraph.Graph.Read_Ncol(input_path, directed=directed, weights='if_present')
-
-            G = igraph.Graph.Load(input_path, directed=directed)
+            else:
+                G = igraph.Graph.Load(input_path, directed=directed)
 
         # If a graph is not a simple graph,
         # the graph should have multi-edges and self-loops removed if they are not allowed.

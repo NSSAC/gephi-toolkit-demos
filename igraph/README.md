@@ -10,6 +10,7 @@
         1. [Layout Algorithm Options](#layout-algorithm-options)
      2. [Boolean Switch Arguments](#boolean-switches) (These are arguments that just boolean switches.)
   3. [Example Invocations](#example-invocations)
+  4. [Miscellaneous](#miscellaneous)
 
 # Dependencies 
 Please use conda on the igraph/requirements.txt file. When installing the dependencies, use the conda-forge channel.
@@ -251,6 +252,7 @@ attribute in the loaded igraph object. These names will be plotted in the output
 # Example Invocations
 
 **NOTE**: All invocations are made with the `igraph` directory as the root.
+**NOTE**: You can validate the output plots against `demo_net_plots_validated`.
 
 
 ## Minimal Invocation
@@ -272,13 +274,13 @@ the use of `--contract`. This switch can work in conjunction with the `--cluster
 algorithms to run. If `--cluster` is not present, we default to using the multi-level Louvain algorithm. Here is 
 an example of that:
 
-`python plot_graph.py --input_path demo_net_inputs/rec-amazon.edges --output_path demo_net_plots/rec-amazon.simple.pdf --contract`
+`python plot_graph.py --input_path demo_net_inputs/rec-amazon.edges --output_path demo_net_plots/rec-amazon.simple.contracted.pdf --contract`
 
 If `--cluster` is present, we choose the algorithm that provides the best clustering as ranked by modularity score. Here is 
 an example of that:
 
 ```
-python plot_graph.py --input_path demo_net_inputs/rec-amazon.edges --output_path demo_net_plots/rec-amazon.simple.pdf --contract --cluster community_multilevel community_leading_eigenvector
+python plot_graph.py --input_path demo_net_inputs/rec-amazon.edges --output_path demo_net_plots/rec-amazon.simple.multi_cluster.pdf --contract --cluster community_multilevel community_leading_eigenvector
 ```
 
 
@@ -295,5 +297,38 @@ python plot_graph.py --input_path demo_net_inputs/test.graphml --output_path dem
 Now, we will provide a list of attributes with `--node_labels_names`:
 
 ```
-python plot_graph.py --input_path demo_net_inputs/test.graphml --output_path demo_net_plots/test.graphml.node_label.pdf --node_labels --node_labels_names Country label
+python plot_graph.py --input_path demo_net_inputs/test.graphml --output_path demo_net_plots/test.graphml.node_label_multi.pdf --node_labels --node_labels_names Country label
 ```
+
+
+### Plotting Ego Networks
+
+An ego network is the induced subgraph of a graph that contains the ego node and all nodes that are n-hops from the ego.
+We show an example here with a 1-hop ego network:
+```
+python plot_graph.py --input_path demo_net_inputs/rec-amazon.edges --output_path demo_net_plots/test.ego.1_hop.png --ego_node_center 3
+```
+Notice this is just the node with name '3' and its neighbors.
+
+Next, we see a 5-hop ego network of '3':
+```
+python plot_graph.py --input_path demo_net_inputs/rec-amazon.edges --output_path demo_net_plots/test.ego.5_hop.png --ego_node_center 3 --ego_node_distance 5
+```
+
+### Plotting Induced Subgraph
+
+While ego networks are nice, we may desire a more general induced subgraph. We can do this by providing a nodes file like
+the one seen in demo_net_inputs/test.nodes that lists a node name per line. Here is an example invocation of this:
+```
+python plot_graph.py --input_path demo_net_inputs/rec-amazon.edges --output_path demo_net_plots/test.subgraph.png --subgraph_nodes demo_net_inputs/test.nodes 
+```
+
+If we would like to include that nodes on the boundary of the induced subgraph, we add the boolean switch:
+
+```
+python plot_graph.py --input_path demo_net_inputs/rec-amazon.edges --output_path demo_net_plots/test.subgraph.with_boundary.png --subgraph_nodes demo_net_inputs/test.nodes --add_subgraph_boundary
+```
+
+# Miscellaneous
+
+**NOTE**: igraph has poor documentation at times.
