@@ -68,7 +68,9 @@ parser.add_argument("--output_width", required=False, default=2000,
 parser.add_argument("--output_height", required=False, default=1000,
                     type=int, help="Specify the output height in pixels.")
 parser.add_argument("--scale", required=False, type=str, help="This string argument that takes three possible values"
-                                                              ": degree, comm_degree, and comm_size. These determine"
+                                                              ": degree, comm_degree, comm_size, or one of the "
+                                                              " structural "
+                                                              " properties listed in the README. These determine"
                                                               " how nodes are scaled if at all.")
 # This flag manages isolates.
 parser.add_argument("--drop_isolates", action='store_true', dest="drop_isolates", required=False, default=False,

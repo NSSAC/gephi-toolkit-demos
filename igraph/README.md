@@ -194,6 +194,18 @@ conda create --name <env> --file igraph/requirements.txt -c conda-forge
     * comm_degree - Scales nodes in a contracted graph by the sum of the degree of the node's members in the original graph. 
     If not clustering is performed, this is an error.
     * comm_size - This is for contracted graphs only. This scales nodes by the size of their community.
+  * Structural Properties:
+    * K-Core
+    * Clustering Coefficient
+    * Betweenness
+    * Closeness
+    * Page Rank
+    * Assortativity
+    * Hub Score
+    * Authority Score
+    * Eccentricity
+    * Constraint 
+    * Harmonic Centrality
 
 * color - This CLA may have three types of values. If the community contraction is applied with comm_coloring,
 the coloring will be applied based on the community selected for the contraction. If there are more nodes than available
@@ -284,7 +296,7 @@ python plot_graph.py --input_path demo_net_inputs/rec-amazon.edges --output_path
 ```
 
 
-### Node Labelling Examples
+## Node Labelling Examples
 
 To plot with node labels, first, ensure that you are using one of the edgelist formats or another format such GraphML
 that can handle node attributes. GraphML supports rich attributes, so we start with an example of that. We first set the 
@@ -300,6 +312,8 @@ Now, we will provide a list of attributes with `--node_labels_names`:
 python plot_graph.py --input_path demo_net_inputs/test.graphml --output_path demo_net_plots/test.graphml.node_label_multi.pdf --node_labels --node_labels_names Country label
 ```
 
+## Subgraphs
+This shows the two ways to plot a subgraph.
 
 ### Plotting Ego Networks
 
@@ -328,6 +342,24 @@ If we would like to include that nodes on the boundary of the induced subgraph, 
 ```
 python plot_graph.py --input_path demo_net_inputs/rec-amazon.edges --output_path demo_net_plots/test.subgraph.with_boundary.png --subgraph_nodes demo_net_inputs/test.nodes --add_subgraph_boundary
 ```
+
+## Scaling
+
+By default, nodes are scaled uniformly according to the number of pixels in the plot. One may wish to alter that and
+many options are offered as seen in the section that covers this parameter. All nodes are sizes are fit to a normal 
+distribution when they are scale to avoid incredibly large or small nodes.
+
+Here, I show an example of scaling by degree. 
+
+``
+python plot_graph.py --input_path demo_net_inputs/rec-amazon.edges --output_path demo_net_plots/test.subgraph.scaled.png --scale "degree" 
+``
+
+Here, I show any example of scaling by K-core
+
+``
+python plot_graph.py --input_path demo_net_inputs/rec-amazon.edges --output_path demo_net_plots/test.subgraph.scaled_k_core.png --scale "k_core" 
+``
 
 # Miscellaneous
 
