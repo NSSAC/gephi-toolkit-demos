@@ -12,8 +12,10 @@
   3. [Example Invocations](#example-invocations)
 
 # Dependencies 
-Please use conda on the igraph/requirements.txt file.
-
+Please use conda on the igraph/requirements.txt file. When installing the dependencies, use the conda-forge channel.
+```
+conda create --name <env> --file igraph/requirements.txt -c conda-forge
+```
 # Arguments
 
 ## Required Arguments
