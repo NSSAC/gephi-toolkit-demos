@@ -286,7 +286,9 @@ the use of `--contract`. This switch can work in conjunction with the `--cluster
 algorithms to run. If `--cluster` is not present, we default to using the multi-level Louvain algorithm. Here is 
 an example of that:
 
-`python plot_graph.py --input_path demo_net_inputs/rec-amazon.edges --output_path demo_net_plots/rec-amazon.simple.contracted.pdf --contract`
+```
+python plot_graph.py --input_path demo_net_inputs/rec-amazon.edges --output_path demo_net_plots/rec-amazon.simple.contracted.pdf --contract
+```
 
 If `--cluster` is present, we choose the algorithm that provides the best clustering as ranked by modularity score. Here is 
 an example of that:

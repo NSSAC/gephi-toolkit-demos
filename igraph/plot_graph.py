@@ -211,20 +211,9 @@ def main():
     if subgraph_nodes is not None or ego_node_center is not None:
         G = get_induced_subgraph(G=G, node_list=induced_graph_nodes)
 
-    # This finds the vertex size.
-    vertex_size = get_vertex_size(G=G, output_width=output_width, output_height=output_height)
-
-    # Set the arrow sizes
-    set_arrow_sizes(visual_style=visual_style)
-
     # Drop isolates if requested.
     if drop_isolates:
         G.delete_vertices(G.vs.select(_degree=0))
-
-    # Adding node labels
-    label_nodes(G=G, node_labels=node_labels, node_labels_names=node_labels_names)
-    # Adding edge labels
-    modify_edges(G=G, edge_width=edge_width, edge_color=edge_color)
 
     # Find the best clustering based on modularity score.
     best_cluster = None
@@ -255,19 +244,33 @@ def main():
     elif color in colors:
         G.vs["color"] = color
 
+    print("Setting the node and edge sizes.")
+    print("====================")
+    # This finds the vertex size.
+    vertex_size = get_vertex_size(G=G, output_width=output_width, output_height=output_height)
+    scale_nodes(scale=scale, G=G, old_G=old_G, best_cluster=best_cluster, vertex_size=vertex_size, directed=directed)
+    # Adding edge labels
+    modify_edges(G=G, edge_width=edge_width, edge_color=edge_color)
+
+    # Set the arrow sizes
+    set_arrow_sizes(visual_style=visual_style)
+
+    print("Finished setting the node sizes in the plot.")
+    print("====================")
+
+    print("Labeling Nodes")
+    print("====================")
+    # Adding node labels
+    label_nodes(G=G, node_labels=node_labels, node_labels_names=node_labels_names)
+    print("Finished labeling nodes.")
+    print("====================")
+
+
     print("Running Layout Algorithm: " + str(layout_algorithm))
     print("====================")
     layout = G.layout(layout_algorithm)
 
     print("Finished running layout algorithm.")
-    print("====================")
-
-    print("Setting the node sizes.")
-    print("====================")
-
-    scale_nodes(scale=scale, G=G, old_G=old_G, best_cluster=best_cluster, vertex_size=vertex_size, directed=directed)
-
-    print("Finished setting the node sizes in the plot.")
     print("====================")
 
     # Plot the graph with the requested settings and layout.
