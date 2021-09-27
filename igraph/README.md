@@ -11,6 +11,7 @@
      2. [Boolean Switch Arguments](#boolean-switches) (These are arguments that just boolean switches.)
   3. [Example Invocations](#example-invocations)
   4. [Miscellaneous](#miscellaneous)
+* [Available Attributes](#available-attributes)
 
 # Dependencies 
 Please use conda on the igraph/requirements.txt file. When installing the dependencies, use the conda-forge channel.
@@ -366,3 +367,8 @@ python plot_graph.py --input_path demo_net_inputs/rec-amazon.edges --output_path
 # Miscellaneous
 
 **NOTE**: igraph has poor documentation at times.
+
+# Available Attributes
+
+The file _get_available_attributes.py_ will output the available attributes for
+the input file. This is used to populate fields in the net.science CI.
